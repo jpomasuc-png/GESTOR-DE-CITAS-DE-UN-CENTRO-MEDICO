@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendar Cita - Centro Salud</title>
+  <!-- La ruta sube dos niveles porque estamos dentro de views/citas/ -->
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <!-- MENÚ LATERAL (Mismo que el Dashboard) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div style="width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">CS</div>
+        <div>
+          <p style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Centro Salud</p>
+          <p style="font-size: 0.75rem; color: var(--text-muted);">Sistema Médico</p>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="../dashboard.html" class="nav-item">Panel Principal</a>
+        <a href="mis_citas.html" class="nav-item">Mis Citas</a>
+        <a href="agendar.html" class="nav-item active">Agendar Cita</a>
+        <a href="../medicos/listar.html" class="nav-item">Médicos</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 36px; height: 36px; background: var(--secondary); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">AG</div>
+          <div>
+            <p style="font-size: 0.875rem; font-weight: 600;">Ana García</p>
+            <span style="font-size: 0.65rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Paciente</span>
+          </div>
+        </div>
+        <a href="../auth/login.html" class="btn-primary" style="display: block; text-align: center; text-decoration: none; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color);">Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <h1 style="font-size: 0.875rem; font-weight: 600;">Agendar Nueva Cita</h1>
+        <p style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text-muted);" id="current-date"></p>
+      </header>
+
+      <main class="content-area">
+        <div style="max-width: 600px;">
+          <div style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700;">Reserva tu espacio</h2>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Selecciona el especialista y el horario que mejor te convenga.</p>
+          </div>
+
+          <!-- Contenedor de éxito oculto por defecto -->
+          <div id="success-message" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; color: #059669; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px;">
+            ✓ Cita reservada exitosamente. Redirigiendo a tus citas...
+          </div>
+
+          <div class="card">
+            <div class="card-header">Formulario de reserva</div>
+            <form id="book-form" style="padding: 1.5rem;">
+              
+              <div class="form-group">
+                <label for="doctor">Médico / Especialista *</label>
+                <select id="doctor" required>
+                  <option value="">Seleccionar médico...</option>
+                  <option value="1">Dra. Carmen Ruiz — Medicina General</option>
+                  <option value="2">Dr. Alejandro Torres — Cardiología</option>
+                  <option value="3">Dra. Lucía Mendoza — Pediatría</option>
+                </select>
+              </div>
+
+              <!-- Esta caja se mostraría dinámicamente con JS al elegir un médico -->
+              <div class="info-box" id="doctor-info" style="display: none;">
+                <p class="title" id="doc-specialty">Especialidad</p>
+                <p class="desc" id="doc-schedule">Horario: Lun-Vie 08:00 - 16:00</p>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                  <label for="date">Fecha *</label>
+                  <input type="date" id="date" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="time">Hora *</label>
+                  <select id="time" required>
+                    <option value="">Seleccionar</option>
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:30">11:30 AM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="reason">Motivo de consulta *</label>
+                <textarea id="reason" rows="3" placeholder="Describa brevemente el motivo de su consulta..." required></textarea>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                <button type="submit" class="btn-primary" style="width: auto;">Confirmar Reserva</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../../assets/js/main.js"></script>
+</body>
+</html>

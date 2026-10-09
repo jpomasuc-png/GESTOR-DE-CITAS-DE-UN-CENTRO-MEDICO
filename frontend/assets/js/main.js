@@ -25,3 +25,54 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+// ==========================================
+    // Lógica para la vista de Agendar Cita
+    // ==========================================
+    const bookForm = document.getElementById("book-form");
+    const dateInput = document.getElementById("date");
+    const doctorSelect = document.getElementById("doctor");
+    const doctorInfoBox = document.getElementById("doctor-info");
+    const docSpecialty = document.getElementById("doc-specialty");
+
+    // Mostrar fecha actual en el topbar si existe
+    const topbarDate = document.getElementById('current-date');
+    if (topbarDate) {
+        topbarDate.textContent = new Date().toISOString().split('T')[0];
+    }
+
+    if (bookForm) {
+        // 1. Bloquear fechas pasadas en el input de fecha
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+
+        // 2. Mostrar info del médico al seleccionarlo
+        doctorSelect.addEventListener('change', function() {
+            if (this.value) {
+                // Obtenemos el texto de la opción seleccionada y sacamos la especialidad
+                const text = this.options[this.selectedIndex].text;
+                const especialidad = text.split('—')[1].trim();
+                docSpecialty.textContent = especialidad;
+                doctorInfoBox.style.display = 'block';
+            } else {
+                doctorInfoBox.style.display = 'none';
+            }
+        });
+
+        // 3. Simular el guardado de la cita
+        bookForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            const successDiv = document.getElementById("success-message");
+            successDiv.style.display = "block";
+            
+            // Ocultamos el formulario para simular que procesó
+            bookForm.style.opacity = "0.5";
+            bookForm.querySelector('button').disabled = true;
+
+            // Redirigimos a "Mis citas" después de 2 segundos
+            setTimeout(() => {
+                window.location.href = "mis_citas.html";
+            }, 2000);
+        });
+    }

@@ -30,7 +30,9 @@ body {
   height: 100vh;
 }
 
-/* Layout de la pantalla dividida (Login/Registro) */
+/* =========================================
+   LAYOUT DE AUTENTICACIÓN (LOGIN/REGISTRO)
+   ========================================= */
 .auth-layout {
   display: flex;
   height: 100vh;
@@ -66,7 +68,9 @@ body {
   max-width: 400px;
 }
 
-/* Estilos de Formularios y Botones */
+/* =========================================
+   FORMULARIOS Y BOTONES (GLOBALES)
+   ========================================= */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -82,7 +86,9 @@ body {
   color: var(--text-muted);
 }
 
-.form-group input {
+.form-group input,
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--border-color);
@@ -90,9 +96,14 @@ body {
   font-size: 0.875rem;
   outline: none;
   transition: box-shadow 0.2s;
+  font-family: inherit;
+  background-color: var(--card-bg);
+  color: var(--text-foreground);
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
   border-color: var(--ring-color);
   box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.2);
 }
@@ -114,7 +125,16 @@ body {
   background-color: var(--primary-hover);
 }
 
-/* test */
+/* Caja de información (Ej: detalles del médico) */
+.info-box {
+  background-color: var(--secondary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.25rem;
+}
+.info-box p.title { font-weight: 600; color: var(--primary); font-size: 0.875rem; }
+.info-box p.desc { color: var(--text-muted); font-size: 0.75rem; margin-top: 2px; }
+
 /* =========================================
    LAYOUT PRINCIPAL (DASHBOARD)
    ========================================= */
@@ -202,7 +222,9 @@ body {
   overflow-y: auto;
 }
 
-/* Tarjetas y Estadísticas */
+/* =========================================
+   TARJETAS Y ESTADÍSTICAS
+   ========================================= */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -267,7 +289,9 @@ body {
 }
 .list-item:last-child { border-bottom: none; }
 
-/* Insignias de estado (Badges) */
+/* =========================================
+   INSIGNIAS DE ESTADO (BADGES)
+   ========================================= */
 .badge {
   display: inline-flex;
   align-items: center;
