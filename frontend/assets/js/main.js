@@ -76,3 +76,29 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 2000);
         });
     }
+
+    // ==========================================
+    // Lógica para la vista de Mis Citas
+    // ==========================================
+    
+    // Función global para simular la cancelación de una cita
+    window.cancelarCita = function(citaId) {
+        if (confirm("¿Estás seguro de que deseas cancelar esta cita?")) {
+            const badge = document.getElementById(`badge-${citaId}`);
+            const actions = document.getElementById(`actions-${citaId}`);
+            const item = document.getElementById(`cita-${citaId}`);
+            
+            if (badge && actions && item) {
+                // Cambiar el diseño visual
+                badge.className = "badge badge-red";
+                badge.textContent = "Cancelada";
+                
+                // Ocultar botones
+                actions.style.display = "none";
+                
+                // Bajar opacidad para indicar que ya no está activa
+                item.style.backgroundColor = "var(--bg-background)";
+                item.style.opacity = "0.8";
+            }
+        }
+    };
