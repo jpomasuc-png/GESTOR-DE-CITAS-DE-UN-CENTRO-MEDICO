@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Principal - Centro Salud</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <!-- MENÚ LATERAL (SIDEBAR) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div style="width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">CS</div>
+        <div>
+          <p style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Centro Salud</p>
+          <p style="font-size: 0.75rem; color: var(--text-muted);">Sistema Médico</p>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item active">Panel Principal</a>
+        <a href="citas/mis_citas.html" class="nav-item">Mis Citas</a>
+        <a href="citas/agendar.html" class="nav-item">Agendar Cita</a>
+        <a href="medicos/listar.html" class="nav-item">Médicos</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 36px; height: 36px; background: var(--secondary); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">AG</div>
+          <div>
+            <p style="font-size: 0.875rem; font-weight: 600;">Ana García</p>
+            <span style="font-size: 0.65rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Paciente</span>
+          </div>
+        </div>
+        <a href="auth/login.html" class="btn-primary" style="display: block; text-align: center; text-decoration: none; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color);">Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-wrapper">
+      
+      <!-- BARRA SUPERIOR -->
+      <header class="topbar">
+        <h1 style="font-size: 0.875rem; font-weight: 600;">Panel Principal</h1>
+        <p style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text-muted);" id="current-date">2026-10-07</p>
+      </header>
+
+      <!-- ÁREA DE DATOS -->
+      <main class="content-area">
+        
+        <div style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700;">Hola, Ana</h2>
+          <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Resumen de tu actividad médica</p>
+        </div>
+
+        <!-- Tarjetas de Estadísticas -->
+        <section class="metrics-grid">
+          <div class="stat-card blue">
+            <span class="stat-label">Próximas citas</span>
+            <span class="stat-value">2</span>
+            <span class="stat-sub">Pendientes</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Completadas</span>
+            <span class="stat-value">5</span>
+            <span class="stat-sub">Historial</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Canceladas</span>
+            <span class="stat-value">1</span>
+            <span class="stat-sub">Total</span>
+          </div>
+        </section>
+
+        <!-- Lista de Próximas Citas -->
+        <section class="card">
+          <div class="card-header">Próximas citas</div>
+          <div>
+            <!-- Fila de cita de ejemplo 1 -->
+            <div class="list-item">
+              <div style="width: 48px; height: 48px; background: var(--secondary); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.75rem; color: var(--primary);">12</span>
+                <span style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase;">Oct</span>
+              </div>
+              <div style="flex: 1;">
+                <p style="font-size: 0.875rem; font-weight: 500;">Dr. Alejandro Torres</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Cardiología · 10:00 AM</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Electrocardiograma</p>
+              </div>
+              <span class="badge badge-blue">Programada</span>
+            </div>
+            
+            <!-- Fila de cita de ejemplo 2 -->
+            <div class="list-item">
+              <div style="width: 48px; height: 48px; background: var(--secondary); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.75rem; color: var(--primary);">15</span>
+                <span style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase;">Oct</span>
+              </div>
+              <div style="flex: 1;">
+                <p style="font-size: 0.875rem; font-weight: 500;">Dra. Valentina Ríos</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Ginecología · 11:30 AM</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Control anual</p>
+              </div>
+              <span class="badge badge-blue">Programada</span>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="../assets/js/main.js"></script>
+  <script>
+    // Pequeño script para poner la fecha actual en la cabecera
+    document.getElementById('current-date').textContent = new Date().toISOString().split('T')[0];
+  </script>
+</body>
+</html>
