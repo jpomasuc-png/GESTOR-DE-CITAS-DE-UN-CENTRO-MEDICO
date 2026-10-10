@@ -11,6 +11,7 @@
   <div class="app-shell">
     
     <!-- MENÚ LATERAL (SIDEBAR) -->
+<!-- MENÚ LATERAL (SIDEBAR CORRECTO) -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div style="width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">CS</div>
@@ -21,21 +22,40 @@
       </div>
       
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="nav-item active">Panel Principal</a>
-        <a href="citas/mis_citas.html" class="nav-item">Mis Citas</a>
-        <a href="citas/agendar.html" class="nav-item">Agendar Cita</a>
-        <a href="medicos/listar.html" class="nav-item">Médicos</a>
+        <a href="dashboard.html" class="nav-item active">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15V9h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Panel
+        </a>
+        <a href="citas/mis_citas.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Mis citas
+        </a>
+        <a href="citas/agendar.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Nueva cita
+        </a>
+        <a href="perfil.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5A4.5 4.5 0 003.5 6v3L2 11h12l-1.5-2V6A4.5 4.5 0 008 1.5zM6 11v.5a2 2 0 004 0V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Notificaciones
+        </a>
+        <a href="perfil.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Mi perfil
+        </a>
       </nav>
 
       <div class="sidebar-footer">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <div style="width: 36px; height: 36px; background: var(--secondary); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">AG</div>
+          <div style="width: 36px; height: 36px; background: var(--secondary); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">AM</div>
           <div>
-            <p style="font-size: 0.875rem; font-weight: 600;">Ana García</p>
+            <p style="font-size: 0.875rem; font-weight: 600;">Ana María García</p>
             <span style="font-size: 0.65rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Paciente</span>
           </div>
         </div>
-        <a href="auth/login.html" class="btn-primary" style="display: block; text-align: center; text-decoration: none; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color);">Cerrar sesión</a>
+        <a href="auth/login.html" class="btn-ghost" style="text-decoration: none;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cerrar sesión
+        </a>
       </div>
     </aside>
 
