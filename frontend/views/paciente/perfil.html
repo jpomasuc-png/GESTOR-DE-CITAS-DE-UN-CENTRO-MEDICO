@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agendar Cita - Centro Salud</title>
+  <title>Mi Perfil - Centro Salud</title>
   <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
     <!-- Fondo oscuro para móviles -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     
-    <!-- MENÚ LATERAL (SIDEBAR CORRECTO) -->
+    <!-- MENÚ LATERAL -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div style="width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">CS</div>
@@ -24,7 +24,7 @@
       </div>
       
       <nav class="sidebar-nav">
-        <a href="../dashboard.html" class="nav-item">
+        <a href="dashboard.html" class="nav-item">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15V9h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
           Panel
         </a>
@@ -32,16 +32,16 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Mis citas
         </a>
-        <!-- LA CLASE ACTIVE AHORA ESTÁ AQUÍ -->
-        <a href="agendar.html" class="nav-item active">
+        <a href="agendar.html" class="nav-item">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Nueva cita
         </a>
-        <a href="../perfil.html" class="nav-item">
+        <!-- Ruta corregida e independiente -->
+        <a href="notificaciones.html" class="nav-item">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5A4.5 4.5 0 003.5 6v3L2 11h12l-1.5-2V6A4.5 4.5 0 008 1.5zM6 11v.5a2 2 0 004 0V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Notificaciones
         </a>
-        <a href="../perfil.html" class="nav-item">
+        <a href="perfil.html" class="nav-item active">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Mi perfil
         </a>
@@ -65,85 +65,72 @@
     <!-- CONTENIDO PRINCIPAL -->
     <div class="main-wrapper">
       
-      <!-- TOPBAR CON BOTÓN HAMBURGUESA PARA MÓVILES -->
       <header class="topbar">
         <button class="menu-toggle" id="menu-toggle">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
         <div class="topbar-content">
-          <h1 style="font-size: 0.875rem; font-weight: 600;">Agendar Nueva Cita</h1>
-          <p style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text-muted);" id="current-date"></p>
+          <h1 style="font-size: 0.875rem; font-weight: 600;">Mi Perfil</h1>
         </div>
       </header>
 
       <main class="content-area">
         <div style="max-width: 600px;">
+          
           <div style="margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 700;">Reserva tu espacio</h2>
-            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Selecciona el especialista y el horario que mejor te convenga.</p>
+            <h2 style="font-size: 1.5rem; font-weight: 700;">Datos Personales</h2>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Actualiza tu información de contacto e historial básico.</p>
           </div>
 
-          <!-- Contenedor de éxito oculto por defecto -->
-          <div id="success-message" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; color: #059669; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px;">
-            ✓ Cita reservada exitosamente. Redirigiendo a tus citas...
-          </div>
-
-          <div class="card">
-            <div class="card-header">Formulario de reserva</div>
-            <form id="book-form" style="padding: 1.5rem;">
+          <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">Información Clínica y Personal</div>
+            <form style="padding: 1.5rem;" onsubmit="event.preventDefault(); alert('Perfil actualizado correctamente');">
               
-              <div class="form-group">
-                <label for="doctor">Médico / Especialista *</label>
-                <select id="doctor" required>
-                  <option value="">Seleccionar médico...</option>
-                  <option value="1">Dra. Carmen Ruiz — Medicina General</option>
-                  <option value="2">Dr. Alejandro Torres — Cardiología</option>
-                  <option value="3">Dra. Lucía Mendoza — Pediatría</option>
-                </select>
-              </div>
-
-              <!-- Caja de información (Dinámica) -->
-              <div class="info-box" id="doctor-info" style="display: none;">
-                <p class="title" id="doc-specialty">Especialidad</p>
-                <p class="desc" id="doc-schedule">Horario: Lun-Vie 08:00 - 16:00</p>
+              <!-- Campos de solo lectura -->
+              <div class="info-box">
+                <p class="desc" style="color: var(--text-foreground); font-size: 0.875rem;">El DNI y la Fecha de Nacimiento están vinculados a su historial clínico oficial y no pueden modificarse desde este panel.</p>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
-                  <label for="date">Fecha *</label>
-                  <input type="date" id="date" required>
+                  <label for="dni">DNI</label>
+                  <input type="text" id="dni" value="12345678" disabled>
                 </div>
-
                 <div class="form-group">
-                  <label for="time">Hora *</label>
-                  <select id="time" required>
-                    <option value="">Seleccionar</option>
-                    <option value="08:00">08:00 AM</option>
-                    <option value="09:00">09:00 AM</option>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="11:30">11:30 AM</option>
-                  </select>
+                  <label for="nacimiento">Fecha de Nacimiento</label>
+                  <input type="date" id="nacimiento" value="1990-05-15" disabled>
                 </div>
               </div>
 
+              <!-- Campos editables -->
               <div class="form-group">
-                <label for="reason">Motivo de consulta *</label>
-                <textarea id="reason" rows="3" placeholder="Describa brevemente el motivo de su consulta..." required></textarea>
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" value="Ana María García" required>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                  <label for="email">Correo Electrónico</label>
+                  <input type="email" id="email" value="paciente@demo.com" required>
+                </div>
+                <div class="form-group">
+                  <label for="telefono">Teléfono / WhatsApp</label>
+                  <input type="tel" id="telefono" value="987-654-321" required>
+                </div>
               </div>
 
               <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
-                <button type="submit" class="btn-primary" style="width: auto;">Confirmar Reserva</button>
+                <button type="submit" class="btn-primary" style="width: auto;">Guardar Cambios</button>
               </div>
             </form>
           </div>
+
         </div>
       </main>
     </div>
   </div>
 
   <script src="../../assets/js/main.js"></script>
-  
-  <!-- Script para la interacción del menú móvil (puedes moverlo a main.js luego) -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const menuToggle = document.getElementById("menu-toggle");
