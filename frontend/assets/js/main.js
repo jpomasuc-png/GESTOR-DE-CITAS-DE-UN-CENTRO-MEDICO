@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Aquí es donde conectaremos con api.php más adelante.
             // Por ahora, simulamos un inicio de sesión exitoso redirigiendo al dashboard.
             errorDiv.style.display = "none";
-            window.location.href = "../dashboard.html"; 
+            window.location.href = "../paciente/dashboard.html"; 
         });
     }
 });
