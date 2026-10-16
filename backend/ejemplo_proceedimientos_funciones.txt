@@ -1,0 +1,51 @@
+USE sistema_citas;
+
+-- ====================================================================
+-- EJEMPLOS PARA PROBAR PROCEDIMIENTOS ALMACENADOS Y FUNCIONES
+-- ====================================================================
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_registrar_cita
+-- ---------------------------------------------------------
+-- PRUEBA 1 - ÉXITO: Viernes 30 de Octubre (El Dr. atiende de 08:00 a 14:00)
+-- Generará la cita número 2 en el sistema.
+CALL sp_registrar_cita(1, 1, '2026-10-30', '11:00:00', 'Chequeo general');
+
+-- PRUEBA 2 - ERROR POR HORA: Intentar registrar fuera del turno (16:00 hrs)
+CALL sp_registrar_cita(2, 1, '2026-10-30', '16:00:00', 'Dolor de cabeza');
+
+-- PRUEBA 3 - ERROR POR CHOQUE: Choque de horarios (La misma hora de la Prueba 1)
+CALL sp_registrar_cita(3, 1, '2026-10-30', '11:00:00', 'Consulta de resultados');
+
+-- PRUEBA 4 - ERROR POR DÍA (NUEVO): Intentar registrar en un día que no trabaja (Domingo)
+-- El 1 de noviembre de 2026 cae Domingo, el sistema debe rechazarlo.
+CALL sp_registrar_cita(1, 1, '2026-11-01', '10:00:00', 'Urgencia de domingo');
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_cancelar_cita
+-- ---------------------------------------------------------
+-- ÉXITO: El usuario 4 (Ana) cancela la cita número 2 que creamos en la Prueba 1.
+CALL sp_cancelar_cita(2, 4);
+
+-- ERROR: Intentar cancelar la cita 2 que ya fue cancelada en el paso anterior.
+CALL sp_cancelar_cita(2, 4);
+
+-- ERROR: Intentar cancelar la cita 1 (que en los datos de prueba la pusimos como 'completada').
+CALL sp_cancelar_cita(1, 4);
+
+-- COMPROBAR HISTORIAL: Verifica que la cancelación se guardó correctamente en la auditoría.
+SELECT * FROM citas_historial;
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA LA FUNCIÓN: fn_calcular_edad
+-- ---------------------------------------------------------
+-- Retorna la edad exacta calculada dinámicamente según la fecha de nacimiento.
+SELECT 
+    p.id_paciente, 
+    u.nombre, 
+    p.fecha_nacimiento, 
+    fn_calcular_edad(p.fecha_nacimiento) AS edad_actual 
+FROM pacientes p
+INNER JOIN usuarios u ON p.id_usuario = u.id_usuario;
