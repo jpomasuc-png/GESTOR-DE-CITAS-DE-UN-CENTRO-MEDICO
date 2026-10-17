@@ -175,7 +175,7 @@ INSERT INTO notificaciones_config (id_usuario, notif_email, notif_whatsapp, reco
 -- =============================================================
 
 -- ─────────────────────────────────────────────────────────────
--- 1. PROCEDIMIENTO ALMACENADO: Registrar Cita (Operación INSERT)
+-- 1. PROCEDIMIENTO ALMACENADO: Registrar Cita 
 -- ─────────────────────────────────────────────────────────────
 
 DELIMITER //
@@ -269,6 +269,114 @@ RETURNS INT
 DETERMINISTIC
 BEGIN
     RETURN TIMESTAMPDIFF(YEAR, p_fecha_nacimiento, CURDATE());
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 4. FUNCIÓN: Validar Restricción de 24 Horas
+-- ─────────────────────────────────────────────────────────────
+DELIMITER //
+
+CREATE FUNCTION fn_validar_anticipacion_24h(p_fecha DATE, p_hora TIME) 
+RETURNS TINYINT(1)
+DETERMINISTIC
+BEGIN
+    DECLARE v_fecha_cita DATETIME;
+    DECLARE v_horas_restantes INT;
+    
+    -- Unimos la fecha y la hora de la cita en un solo DATETIME
+    SET v_fecha_cita = CONCAT(p_fecha, ' ', p_hora);
+    
+    -- Calculamos la diferencia en horas desde este momento (NOW) hasta la cita
+    SET v_horas_restantes = TIMESTAMPDIFF(HOUR, NOW(), v_fecha_cita);
+    
+    IF v_horas_restantes >= 24 THEN
+        RETURN 1; -- 1 significa "Válido" (Cumple la regla)
+    ELSE
+        RETURN 0; -- 0 significa "Inválido" (Faltan menos de 24h)
+    END IF;
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 5. PROCEDIMIENTO ALMACENADO: Reprogramar Cita (Operación UPDATE)
+-- ─────────────────────────────────────────────────────────────
+
+DELIMITER //
+
+CREATE PROCEDURE sp_reprogramar_cita (
+    IN p_id_cita INT,
+    IN p_nueva_fecha DATE,
+    IN p_nueva_hora TIME,
+    IN p_id_usuario INT
+)
+BEGIN
+    DECLARE v_estado_actual VARCHAR(20);
+    DECLARE v_fecha_actual DATE;
+    DECLARE v_hora_actual TIME;
+    DECLARE v_id_medico INT;
+    DECLARE v_choques INT;
+
+    -- Obtenemos los datos actuales de la cita
+    SELECT estado, fecha, hora, id_medico INTO v_estado_actual, v_fecha_actual, v_hora_actual, v_id_medico
+    FROM citas WHERE id_cita = p_id_cita;
+
+    -- 1. Validar restricción de tiempo con nuestra función (mínimo 24h antes)
+    IF fn_validar_anticipacion_24h(v_fecha_actual, v_hora_actual) = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'ERROR: Debe reprogramar con al menos 24 horas de anticipación.';
+        
+    -- 2. Validar que la cita no esté terminada o cancelada
+    ELSEIF v_estado_actual IN ('completada', 'cancelada') THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'ERROR: No se puede reprogramar una cita completada o cancelada.';
+        
+    ELSE
+        -- 3. Validar si el médico tiene ese nuevo horario libre
+        SELECT COUNT(*) INTO v_choques FROM citas
+        WHERE id_medico = v_id_medico AND fecha = p_nueva_fecha AND hora = p_nueva_hora 
+        AND estado IN ('programada', 'confirmada', 'reprogramada');
+        
+        IF v_choques > 0 THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'ERROR: El médico ya tiene una cita en ese nuevo horario.';
+        ELSE
+            -- 4. Actualizar la cita y liberar el cupo anterior
+            UPDATE citas 
+            SET fecha = p_nueva_fecha, hora = p_nueva_hora, estado = 'reprogramada' 
+            WHERE id_cita = p_id_cita;
+            
+            -- 5. Registrar el movimiento en el historial
+            INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
+            VALUES (p_id_cita, v_estado_actual, 'reprogramada', p_id_usuario);
+        END IF;
+    END IF;
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 6. FUNCIÓN: Actualizar Preferencias de Notificación
+-- ─────────────────────────────────────────────────────────────
+
+DELIMITER //
+
+CREATE PROCEDURE sp_actualizar_preferencias (
+    IN p_id_usuario INT,
+    IN p_notif_email TINYINT(1),
+    IN p_notif_whatsapp TINYINT(1),
+    IN p_rec_24h TINYINT(1),
+    IN p_rec_2h TINYINT(1)
+)
+BEGIN
+    UPDATE notificaciones_config
+    SET notif_email = p_notif_email,
+        notif_whatsapp = p_notif_whatsapp,
+        recordatorio_24h = p_rec_24h,
+        recordatorio_2h = p_rec_2h
+    WHERE id_usuario = p_id_usuario;
 END //
 
 DELIMITER ;
