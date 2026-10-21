@@ -260,48 +260,7 @@ END //
 DELIMITER ;
 
 -- ─────────────────────────────────────────────────────────────
--- 3. FUNCIÓN: Calcular la edad del paciente
--- ─────────────────────────────────────────────────────────────
-DELIMITER //
-
-CREATE FUNCTION fn_calcular_edad(p_fecha_nacimiento DATE) 
-RETURNS INT 
-DETERMINISTIC
-BEGIN
-    RETURN TIMESTAMPDIFF(YEAR, p_fecha_nacimiento, CURDATE());
-END //
-
-DELIMITER ;
-
--- ─────────────────────────────────────────────────────────────
--- 4. FUNCIÓN: Validar Restricción de 24 Horas
--- ─────────────────────────────────────────────────────────────
-DELIMITER //
-
-CREATE FUNCTION fn_validar_anticipacion_24h(p_fecha DATE, p_hora TIME) 
-RETURNS TINYINT(1)
-DETERMINISTIC
-BEGIN
-    DECLARE v_fecha_cita DATETIME;
-    DECLARE v_horas_restantes INT;
-    
-    -- Unimos la fecha y la hora de la cita en un solo DATETIME
-    SET v_fecha_cita = CONCAT(p_fecha, ' ', p_hora);
-    
-    -- Calculamos la diferencia en horas desde este momento (NOW) hasta la cita
-    SET v_horas_restantes = TIMESTAMPDIFF(HOUR, NOW(), v_fecha_cita);
-    
-    IF v_horas_restantes >= 24 THEN
-        RETURN 1; -- 1 significa "Válido" (Cumple la regla)
-    ELSE
-        RETURN 0; -- 0 significa "Inválido" (Faltan menos de 24h)
-    END IF;
-END //
-
-DELIMITER ;
-
--- ─────────────────────────────────────────────────────────────
--- 5. PROCEDIMIENTO ALMACENADO: Reprogramar Cita (Operación UPDATE)
+-- 3. PROCEDIMIENTO ALMACENADO: Reprogramar Cita (Operación UPDATE)
 -- ─────────────────────────────────────────────────────────────
 
 DELIMITER //
@@ -358,7 +317,28 @@ END //
 DELIMITER ;
 
 -- ─────────────────────────────────────────────────────────────
--- 6. FUNCIÓN: Actualizar Preferencias de Notificación
+-- 4. PROCEDIMIENTO ALMACENADO: Listar Médicos por Especialidad
+-- ─────────────────────────────────────────────────────────────
+
+DELIMITER //
+
+CREATE PROCEDURE sp_listar_medicos_por_especialidad (
+    IN p_id_especialidad TINYINT
+)
+BEGIN
+    SELECT 
+        m.id_medico, 
+        u.nombre AS nombre_medico
+    FROM medicos m
+    INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
+    WHERE m.id_especialidad = p_id_especialidad 
+      AND u.activo = 1;
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 5. PROCEDIMIENTO ALMACENADO: Actualizar Preferencias de Notificación
 -- ─────────────────────────────────────────────────────────────
 
 DELIMITER //
@@ -377,6 +357,97 @@ BEGIN
         recordatorio_24h = p_rec_24h,
         recordatorio_2h = p_rec_2h
     WHERE id_usuario = p_id_usuario;
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 6. PROCEDIMIENTO ALMACENADO: Actualizar Password
+-- ─────────────────────────────────────────────────────────────
+
+DELIMITER //
+
+CREATE PROCEDURE sp_actualizar_password (
+    IN p_email VARCHAR(150),
+    IN p_nuevo_password_hash VARCHAR(255)
+)
+BEGIN
+    UPDATE usuarios 
+    SET password_hash = p_nuevo_password_hash 
+    WHERE email = p_email AND activo = 1;
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 7. PROCEDIMIENTO ALMACENADO: Obtener Citas de un Paciente
+-- ─────────────────────────────────────────────────────────────
+
+DELIMITER //
+
+CREATE PROCEDURE sp_obtener_citas_paciente (
+    IN p_id_paciente INT
+)
+BEGIN
+    SELECT 
+        c.id_cita,
+        c.fecha,
+        c.hora,
+        c.motivo,
+        c.estado,
+        u_med.nombre AS medico,
+        e.nombre AS especialidad
+    FROM citas c
+    INNER JOIN medicos m ON c.id_medico = m.id_medico
+    INNER JOIN usuarios u_med ON m.id_usuario = u_med.id_usuario
+    INNER JOIN especialidades e ON m.id_especialidad = e.id_especialidad
+    WHERE c.id_paciente = p_id_paciente
+    ORDER BY c.fecha DESC, c.hora DESC;
+END //
+
+DELIMITER ;
+
+
+-- =============================================================
+-- FUNCIONES DEFINIDAS PARA EL USUARIO
+-- =============================================================
+
+-- ─────────────────────────────────────────────────────────────
+-- 1. FUNCIÓN: Calcular la edad del paciente
+-- ─────────────────────────────────────────────────────────────
+DELIMITER //
+
+CREATE FUNCTION fn_calcular_edad(p_fecha_nacimiento DATE) 
+RETURNS INT 
+DETERMINISTIC
+BEGIN
+    RETURN TIMESTAMPDIFF(YEAR, p_fecha_nacimiento, CURDATE());
+END //
+
+DELIMITER ;
+
+-- ─────────────────────────────────────────────────────────────
+-- 2. FUNCIÓN: Validar Restricción de 24 Horas
+-- ─────────────────────────────────────────────────────────────
+DELIMITER //
+
+CREATE FUNCTION fn_validar_anticipacion_24h(p_fecha DATE, p_hora TIME) 
+RETURNS TINYINT(1)
+DETERMINISTIC
+BEGIN
+    DECLARE v_fecha_cita DATETIME;
+    DECLARE v_horas_restantes INT;
+    
+    SET v_fecha_cita = CONCAT(p_fecha, ' ', p_hora);
+    
+    -- Calculamos la diferencia en horas desde este momento (NOW) hasta la cita
+    SET v_horas_restantes = TIMESTAMPDIFF(HOUR, NOW(), v_fecha_cita);
+    
+    IF v_horas_restantes >= 24 THEN
+        RETURN 1; -- 1 significa "Válido" (Cumple la regla)
+    ELSE
+        RETURN 0; -- 0 significa "Inválido" (Faltan menos de 24h)
+    END IF;
 END //
 
 DELIMITER ;
