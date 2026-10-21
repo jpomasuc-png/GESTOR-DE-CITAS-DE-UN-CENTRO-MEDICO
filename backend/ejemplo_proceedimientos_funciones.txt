@@ -49,3 +49,82 @@ SELECT
     fn_calcular_edad(p.fecha_nacimiento) AS edad_actual 
 FROM pacientes p
 INNER JOIN usuarios u ON p.id_usuario = u.id_usuario;
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_reprogramar_cita
+-- ---------------------------------------------------------
+-- PRUEBA 1 - ÉXITO: Reprogramar cita 3 (Dra. Mendoza) al Jueves 29 de Octubre a las 16:00
+-- La cita 3 pertenece al paciente 3 (usuario 6).
+CALL sp_reprogramar_cita(3, '2026-10-29', '16:00:00', 6);
+
+-- PRUEBA 2 - ERROR DE ESTADO: Intentar reprogramar una cita ya completada (Cita 1)
+CALL sp_reprogramar_cita(1, '2026-11-10', '10:00:00', 4);
+
+-- PRUEBA 3 - ERROR POR CHOQUE: Intentamos agendar una nueva cita en el mismo espacio y luego reprogramar otra para que choque.
+-- Insertamos una cita dummy directo para el choque:
+INSERT INTO citas (id_paciente, id_medico, fecha, hora, motivo, estado) VALUES (1, 2, '2026-11-15', '14:00:00', 'Prueba', 'programada');
+-- Ahora intentamos reprogramar la cita 3 a ese mismo bloque:
+CALL sp_reprogramar_cita(3, '2026-11-15', '14:00:00', 6); 
+
+-- COMPROBAR HISTORIAL: Verifica los cambios de estado por la reprogramación en auditoría
+SELECT * FROM citas_historial;
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_listar_medicos_por_especialidad
+-- ---------------------------------------------------------
+-- PRUEBA 1: Listar cardiólogos (id_especialidad = 2) -> Debería salir Dr. Alejandro Torres
+CALL sp_listar_medicos_por_especialidad(2);
+
+-- PRUEBA 2: Listar pediatras (id_especialidad = 3) -> Debería salir Dra. Lucía Mendoza
+CALL sp_listar_medicos_por_especialidad(3);
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_actualizar_preferencias
+-- ---------------------------------------------------------
+-- PRUEBA 1: Modificar las preferencias del usuario 4 (Ana María García)
+-- Activando todas las notificaciones: email(1), whatsapp(1), rec_24h(1), rec_2h(1)
+CALL sp_actualizar_preferencias(4, 1, 1, 1, 1);
+
+-- COMPROBAR EL CAMBIO:
+SELECT u.nombre, n.* 
+FROM notificaciones_config n
+INNER JOIN usuarios u ON n.id_usuario = u.id_usuario
+WHERE n.id_usuario = 4;
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_actualizar_password
+-- ---------------------------------------------------------
+-- PRUEBA 1: Simulamos la actualización de contraseña por olvido para 'ana@gmail.com'
+CALL sp_actualizar_password('ana@gmail.com', '$2y$10$NUEVOHASHENCRIPTADOPARALAPRUEBA1234567890');
+
+-- COMPROBAR EL CAMBIO:
+SELECT nombre, email, password_hash 
+FROM usuarios 
+WHERE email = 'ana@gmail.com';
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA: sp_obtener_citas_paciente
+-- ---------------------------------------------------------
+-- PRUEBA 1: Listar todas las citas del paciente 1 (Ana María García)
+-- Debe traer la cita que tiene completada.
+CALL sp_obtener_citas_paciente(1);
+
+-- PRUEBA 2: Listar citas del paciente 3 (María Fernández)
+-- Debe traer su cita reprogramada con la Dra. Mendoza.
+CALL sp_obtener_citas_paciente(3);
+
+
+-- ---------------------------------------------------------
+-- PRUEBAS PARA LA FUNCIÓN: fn_validar_anticipacion_24h
+-- ---------------------------------------------------------
+-- PRUEBA 1: Fecha muy a futuro (Debe retornar 1 - Válido, cumple la regla)
+SELECT fn_validar_anticipacion_24h('2026-12-31', '10:00:00') AS es_valido_futuro;
+
+-- PRUEBA 2: Fecha de hoy o pasada (Debe retornar 0 - Inválido, faltan menos de 24 hrs)
+-- Usa CURDATE() para simular un intento de cancelación/reprogramación para el día actual
+SELECT fn_validar_anticipacion_24h(CURDATE(), CURTIME()) AS es_valido_hoy;

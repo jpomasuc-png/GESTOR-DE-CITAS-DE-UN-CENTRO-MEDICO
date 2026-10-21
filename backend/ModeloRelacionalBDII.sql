@@ -45,7 +45,7 @@ INSERT INTO especialidades (nombre) VALUES
   ('Medicina General'), ('Cardiología'), ('Pediatría'), ('Traumatología');
 
 -- ─────────────────────────────────────────────────────────────
--- 4. MÉDICOS (Corregido: sin columna horario)
+-- 4. MÉDICOS 
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE medicos (
   id_medico       INT     NOT NULL AUTO_INCREMENT,
@@ -59,7 +59,7 @@ CREATE TABLE medicos (
 );
 
 -- ─────────────────────────────────────────────────────────────
--- 5. HORARIOS DE MÉDICOS (Restablecida desde el diagrama)
+-- 5. HORARIOS DE MÉDICOS 
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE horarios_medicos (
   id_horario   INT NOT NULL AUTO_INCREMENT,
