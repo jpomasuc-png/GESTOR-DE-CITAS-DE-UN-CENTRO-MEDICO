@@ -150,3 +150,41 @@ INNER JOIN usuarios u_med ON m.id_usuario = u_med.id_usuario
 INNER JOIN especialidades e ON m.id_especialidad = e.id_especialidad
 INNER JOIN pacientes p ON c.id_paciente = p.id_paciente
 INNER JOIN usuarios u_pac ON p.id_usuario = u_pac.id_usuario;
+
+-- ─────────────────────────────────────────────────────────────
+-- 6. VISTA: Relación de Médicos y Pacientes para el Médico
+-- Permite al médico ver todos sus pacientes con citas activas.
+-- ─────────────────────────────────────────────────────────────
+
+CREATE VIEW vw_vista_medico_pacientes AS
+SELECT
+    p.id_paciente,
+    u.nombre AS nombre_paciente,
+    u.dni AS dni_paciente,
+    u.telefono AS telefono_paciente,
+    fn_calcular_edad(p.fecha_nacimiento) AS edad_paciente,
+    p.genero AS genero_paciente,
+    p.tipo_sangre
+FROM usuarios u
+INNER JOIN medicos m ON u.id_usuario = m.id_usuario
+INNER JOIN pacientes p ON m.id_medico = p.id_medico
+INNER JOIN citas c ON p.id_paciente = c.id_paciente
+WHERE c.estado IN ('programada', 'confirmada') AND u.rol = 'paciente';
+
+-- ─────────────────────────────────────────────────────────────
+-- 7. VISTA: Lista de Médicos y Pacientes para el Administrador
+-- Permite al administrador ver todos los usuarios con rol de médico o paciente.
+-- ─────────────────────────────────────────────────────────────
+
+CREATE VIEW vw_vista_admin_medicosypacientes AS
+SELECT 
+    u.id_usuario,
+    u.nombre,
+    u.email,
+    u.telefono, 
+    u.rol
+FROM usuarios u
+WHERE u.rol IN ('medico', 'paciente')
+GROUP BY u.rol
+ORDER BY u.id_usuario;
+
