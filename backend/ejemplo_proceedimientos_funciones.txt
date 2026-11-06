@@ -7,29 +7,30 @@ USE sistema_citas;
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_registrar_cita
 -- ---------------------------------------------------------
--- PRUEBA 1 - ÉXITO: Médico Dr. Torres atiende lunes a viernes de 08:00 a 14:00
-CALL sp_registrar_cita(1, 1, '2026-10-30', '11:00:00', 'Chequeo general');
+-- PRUEBA 1 - ÉXITO: Lunes 9 de noviembre (Dr. Torres atiende de 08:00 a 14:00)
+CALL sp_registrar_cita(1, 1, '2026-11-09', '11:00:00', 'Chequeo general');
 
 -- PRUEBA 2 - ERROR POR HORA: fuera del horario del médico
-CALL sp_registrar_cita(2, 1, '2026-10-30', '16:00:00', 'Dolor de cabeza');
+CALL sp_registrar_cita(2, 1, '2026-11-09', '16:00:00', 'Dolor de cabeza');
 
 -- PRUEBA 3 - ERROR POR CHOQUE: misma fecha/hora que la cita anterior
-CALL sp_registrar_cita(3, 1, '2026-10-30', '11:00:00', 'Consulta de resultados');
+CALL sp_registrar_cita(3, 1, '2026-11-09', '11:00:00', 'Consulta de resultados');
 
--- PRUEBA 4 - ERROR POR DÍA: domingo no trabaja
-CALL sp_registrar_cita(1, 1, '2026-11-01', '10:00:00', 'Urgencia de domingo');
+-- PRUEBA 4 - ERROR POR DÍA: domingo no trabaja (esta fecha también cumple las 24 horas)
+CALL sp_registrar_cita(1, 1, '2026-11-15', '10:00:00', 'Urgencia de domingo');
 
 -- PRUEBA 5 - CORRECTO: paciente y médico activos, hora válida
-CALL sp_registrar_cita(3, 1, '2026-11-02', '10:30:00', 'Control general');
+CALL sp_registrar_cita(3, 1, '2026-11-16', '10:30:00', 'Control general');
 
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_cancelar_cita
 -- ---------------------------------------------------------
--- ÉXITO: cancelar una cita programada con anticipación
-CALL sp_cancelar_cita(2, 4);
+-- La prueba de registro anterior crea la cita 4 para Ana (paciente 1).
+-- ÉXITO: Ana cancela la cita 4 que le pertenece y está programada a futuro.
+CALL sp_cancelar_cita(4, 4);
 
 -- ERROR: intentar cancelar una cita ya cancelada
-CALL sp_cancelar_cita(2, 4);
+CALL sp_cancelar_cita(4, 4);
 
 -- ERROR: intentar cancelar una cita completada
 CALL sp_cancelar_cita(1, 4);
@@ -42,17 +43,18 @@ ORDER BY cambiado_en DESC;
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_reprogramar_cita
 -- ---------------------------------------------------------
--- PRUEBA 1 - ÉXITO: reprogramar cita 3 a jueves 29 de octubre 16:00
-CALL sp_reprogramar_cita(3, '2026-10-29', '16:00:00', 6);
+-- La prueba de registro anterior crea la cita 5 para María (usuario 6).
+-- PRUEBA 1 - ÉXITO: moverla del lunes 16 al jueves 19 de noviembre.
+CALL sp_reprogramar_cita(5, '2026-11-19', '11:00:00', 6);
 
 -- PRUEBA 2 - ERROR DE ESTADO: cita ya completada, no se puede reprogramar
-CALL sp_reprogramar_cita(1, '2026-11-10', '10:00:00', 4);
+CALL sp_reprogramar_cita(1, '2026-11-23', '10:00:00', 4);
 
 -- PRUEBA 3 - ERROR POR CHOQUE: intentar reprogramar a un horario ocupado
 INSERT INTO citas (id_paciente, id_medico, fecha, hora, motivo, estado)
-VALUES (1, 2, '2026-11-15', '14:00:00', 'Prueba de choque', 'programada');
+VALUES (1, 1, '2026-11-23', '11:30:00', 'Prueba de choque', 'programada');
 
-CALL sp_reprogramar_cita(3, '2026-11-15', '14:00:00', 6);
+CALL sp_reprogramar_cita(5, '2026-11-23', '11:30:00', 6);
 
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_listar_medicos_por_especialidad

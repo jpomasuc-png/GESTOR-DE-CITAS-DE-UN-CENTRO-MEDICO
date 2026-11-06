@@ -131,17 +131,19 @@ CREATE PROCEDURE sp_cancelar_cita (
 )
 BEGIN
     DECLARE v_estado_actual VARCHAR(20);
-        DECLARE v_medico_bloqueo INT;
-        SELECT id_medico INTO v_medico_bloqueo
-        FROM medicos
-        WHERE id_medico = p_medico_id
-        FOR UPDATE;
+    DECLARE v_fecha DATE;
+    DECLARE v_hora TIME;
+    DECLARE v_id_paciente INT;
+    DECLARE v_id_medico INT;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         RESIGNAL;
     END;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND
+        SET v_estado_actual = NULL;
 
     START TRANSACTION;
 
@@ -220,12 +222,12 @@ BEGIN
     IF v_estado_actual IS NULL THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'ERROR: La cita no existe.';
-    ELSEIF fn_validar_anticipacion_24h(v_fecha_actual, v_hora_actual) = 0 THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: Debe reprogramar con al menos 24 horas de anticipación.';
     ELSEIF v_estado_actual NOT IN ('programada', 'confirmada', 'reprogramada') THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'ERROR: El estado actual de la cita no permite reprogramarla.';
+    ELSEIF fn_validar_anticipacion_24h(v_fecha_actual, v_hora_actual) = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'ERROR: Debe reprogramar con al menos 24 horas de anticipación.';
     ELSEIF p_nueva_fecha IS NULL OR p_nueva_hora IS NULL
         OR fn_validar_anticipacion_24h(p_nueva_fecha, p_nueva_hora) = 0 THEN
         SIGNAL SQLSTATE '45000'
@@ -1014,4 +1016,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
