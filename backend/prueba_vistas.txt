@@ -1,5 +1,14 @@
+USE sistema_citas;
+
+-- ====================================================================
+-- PRUEBAS DE VISTAS
+-- ====================================================================
+
+-- ---------------------------------------------------------
+-- 1. Vista: vw_agenda_paciente
+-- ---------------------------------------------------------
 -- Consultar todas las citas del paciente con id_paciente = 1
-SELECT 
+SELECT
     id_cita,
     nombre_medico,
     especialidad,
@@ -12,10 +21,11 @@ FROM vw_agenda_paciente
 WHERE id_paciente = 1
 ORDER BY fecha DESC, hora DESC;
 
-----------------------------------------------------------------------------
-
--- Consultar las citas del día para el Dr. Torres (id_medico = 1)
-SELECT 
+-- ---------------------------------------------------------
+-- 2. Vista: vw_agenda_medico
+-- ---------------------------------------------------------
+-- Consultar las citas del día para el Dr. Torres
+SELECT
     id_cita,
     hora,
     nombre_paciente,
@@ -26,14 +36,15 @@ SELECT
     motivo,
     estado
 FROM vw_agenda_medico
-WHERE id_medico = 1 
+WHERE id_medico = 1
   AND fecha = CURDATE()
 ORDER BY hora ASC;
 
-----------------------------------------------------------------------------
-
--- Listar horarios de atención para Cardiología
-SELECT 
+-- ---------------------------------------------------------
+-- 3. Vista: vw_medicos_horarios
+-- ---------------------------------------------------------
+-- Mostrar horarios del médico de Cardiología
+SELECT
     nombre_medico,
     especialidad,
     dia_semana_nombre,
@@ -41,14 +52,15 @@ SELECT
     hora_fin,
     tipo
 FROM vw_medicos_horarios
-WHERE especialidad = 'Cardiología' 
+WHERE especialidad = 'Cardiología'
   AND horario_activo = 1
 ORDER BY dia_semana ASC, hora_inicio ASC;
 
-----------------------------------------------------------------------------
-
--- Obtener correos y teléfonos de pacientes que aceptan recordatorios de 24h
-SELECT 
+-- ---------------------------------------------------------
+-- 4. Vista: vw_recordatorios_pendientes
+-- ---------------------------------------------------------
+-- Obtener correos y teléfonos de pacientes con recordatorios activos
+SELECT
     id_cita,
     nombre_paciente,
     email_paciente,
@@ -62,19 +74,37 @@ SELECT
 FROM vw_recordatorios_pendientes
 WHERE recordatorio_24h = 1;
 
-----------------------------------------------------------------------------
-
--- A. Contar total de citas agrupadas por Estado
-SELECT 
-    estado, 
+-- ---------------------------------------------------------
+-- 5. Vista: vw_reporte_general_citas
+-- ---------------------------------------------------------
+-- A. Contar citas por estado
+SELECT
+    estado,
     COUNT(*) AS total
 FROM vw_reporte_general_citas
 GROUP BY estado;
 
--- B. Contar citas reservadas por Especialidad
-SELECT 
-    especialidad, 
+-- B. Contar reservas por especialidad
+SELECT
+    especialidad,
     COUNT(*) AS total_reservas
 FROM vw_reporte_general_citas
 GROUP BY especialidad
 ORDER BY total_reservas DESC;
+
+-- ---------------------------------------------------------
+-- 6. Vista: vw_vista_medico_pacientes
+-- ---------------------------------------------------------
+-- Ver pacientes asociados a un médico
+SELECT *
+FROM vw_vista_medico_pacientes
+WHERE id_medico = 1
+ORDER BY nombre_paciente;
+
+-- ---------------------------------------------------------
+-- 7. Vista: vw_vista_admin_medicosypacientes
+-- ---------------------------------------------------------
+-- Ver médicos y pacientes para administración
+SELECT *
+FROM vw_vista_admin_medicosypacientes
+ORDER BY rol, nombre;
