@@ -10,7 +10,7 @@ DELIMITER //
 
 CREATE FUNCTION fn_calcular_edad(p_fecha_nacimiento DATE) 
 RETURNS INT 
-DETERMINISTIC
+NOT DETERMINISTIC
 BEGIN
     RETURN TIMESTAMPDIFF(YEAR, p_fecha_nacimiento, CURDATE());
 END //
@@ -24,17 +24,20 @@ DELIMITER //
 
 CREATE FUNCTION fn_validar_anticipacion_24h(p_fecha DATE, p_hora TIME) 
 RETURNS TINYINT(1)
-DETERMINISTIC
+NOT DETERMINISTIC
 BEGIN
     DECLARE v_fecha_cita DATETIME;
-    DECLARE v_horas_restantes INT;
+    DECLARE v_minutos_restantes INT;
     
-    SET v_fecha_cita = CONCAT(p_fecha, ' ', p_hora);
+    IF p_fecha IS NULL OR p_hora IS NULL THEN
+        RETURN 0;
+    END IF;
+
+    SET v_fecha_cita = TIMESTAMP(p_fecha, p_hora);
     
-    -- Calculamos la diferencia en horas desde este momento (NOW) hasta la cita
-    SET v_horas_restantes = TIMESTAMPDIFF(HOUR, NOW(), v_fecha_cita);
+    SET v_minutos_restantes = TIMESTAMPDIFF(MINUTE, NOW(), v_fecha_cita);
     
-    IF v_horas_restantes >= 24 THEN
+    IF v_minutos_restantes >= 1440 THEN
         RETURN 1; -- 1 significa "Válido" (Cumple la regla)
     ELSE
         RETURN 0; -- 0 significa "Inválido" (Faltan menos de 24h)
@@ -123,7 +126,7 @@ BEGIN
     DECLARE v_citas_completadas INT;
     DECLARE v_tasa DECIMAL(5,2);
 
-    SELECT COUNT(*), SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END) 
+    SELECT COUNT(*), COALESCE(SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END), 0)
     INTO v_total_citas, v_citas_completadas
     FROM citas;
 

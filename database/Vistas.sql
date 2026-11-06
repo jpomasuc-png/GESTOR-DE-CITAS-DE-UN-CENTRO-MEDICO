@@ -19,7 +19,11 @@ SELECT
     c.motivo,
     c.notas_medico,
     c.estado,
-    fn_validar_anticipacion_24h(c.fecha, c.hora) AS permite_reprogramar_cancelar
+    CASE
+        WHEN c.estado IN ('programada', 'confirmada', 'reprogramada')
+         AND fn_validar_anticipacion_24h(c.fecha, c.hora) = 1 THEN 1
+        ELSE 0
+    END AS permite_reprogramar_cancelar
 FROM citas c
 INNER JOIN pacientes p ON c.id_paciente = p.id_paciente
 INNER JOIN usuarios u_pac ON p.id_usuario = u_pac.id_usuario
@@ -125,9 +129,9 @@ INNER JOIN medicos m ON c.id_medico = m.id_medico
 INNER JOIN usuarios u_med ON m.id_usuario = u_med.id_usuario
 INNER JOIN especialidades e ON m.id_especialidad = e.id_especialidad
 LEFT JOIN notificaciones_config nc ON u_pac.id_usuario = nc.id_usuario
-WHERE c.estado IN ('programada', 'confirmada')
-  AND CONCAT(c.fecha, ' ', c.hora) >= NOW()
-  AND CONCAT(c.fecha, ' ', c.hora) <= DATE_ADD(NOW(), INTERVAL 24 HOUR);
+WHERE c.estado IN ('programada', 'confirmada', 'reprogramada')
+    AND TIMESTAMP(c.fecha, c.hora) >= NOW()
+    AND TIMESTAMP(c.fecha, c.hora) <= DATE_ADD(NOW(), INTERVAL 24 HOUR);
 
 
 -- ─────────────────────────────────────────────────────────────
@@ -157,19 +161,23 @@ INNER JOIN usuarios u_pac ON p.id_usuario = u_pac.id_usuario;
 -- ─────────────────────────────────────────────────────────────
 
 CREATE VIEW vw_vista_medico_pacientes AS
-SELECT
+SELECT DISTINCT
+        m.id_medico,
     p.id_paciente,
-    u.nombre AS nombre_paciente,
-    u.dni AS dni_paciente,
-    u.telefono AS telefono_paciente,
+        u_pac.nombre AS nombre_paciente,
+        u_pac.dni AS dni_paciente,
+        u_pac.telefono AS telefono_paciente,
     fn_calcular_edad(p.fecha_nacimiento) AS edad_paciente,
     p.genero AS genero_paciente,
     p.tipo_sangre
-FROM usuarios u
-INNER JOIN medicos m ON u.id_usuario = m.id_usuario
-INNER JOIN pacientes p ON m.id_medico = p.id_medico
-INNER JOIN citas c ON p.id_paciente = c.id_paciente
-WHERE c.estado IN ('programada', 'confirmada') AND u.rol = 'paciente';
+FROM citas c
+INNER JOIN medicos m ON c.id_medico = m.id_medico
+INNER JOIN usuarios u_med ON m.id_usuario = u_med.id_usuario
+INNER JOIN pacientes p ON c.id_paciente = p.id_paciente
+INNER JOIN usuarios u_pac ON p.id_usuario = u_pac.id_usuario
+WHERE c.estado IN ('programada', 'confirmada', 'en_curso', 'reprogramada')
+    AND u_med.activo = 1
+    AND u_pac.rol = 'paciente';
 
 -- ─────────────────────────────────────────────────────────────
 -- 7. VISTA: Lista de Médicos y Pacientes para el Administrador
@@ -184,7 +192,5 @@ SELECT
     u.telefono, 
     u.rol
 FROM usuarios u
-WHERE u.rol IN ('medico', 'paciente')
-GROUP BY u.rol
-ORDER BY u.id_usuario;
+WHERE u.rol IN ('medico', 'paciente');
 

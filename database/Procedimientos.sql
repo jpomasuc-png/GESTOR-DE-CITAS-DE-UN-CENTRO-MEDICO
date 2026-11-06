@@ -19,43 +19,103 @@ CREATE PROCEDURE sp_registrar_cita (
 BEGIN
     DECLARE v_hora_inicio TIME;
     DECLARE v_hora_fin TIME;
+    DECLARE v_horarios_validos INT DEFAULT 0;
     DECLARE v_citas_existentes INT;
+    DECLARE v_excepciones INT DEFAULT 0;
+    DECLARE v_usuario_activo INT DEFAULT 0;
+    DECLARE v_medico_bloqueo INT;
     DECLARE v_dia_semana TINYINT;
 
-    -- Obtener el día de la semana para la fecha solicitada (1=Domingo, 2=Lunes, etc.)
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    IF p_fecha IS NULL OR p_hora IS NULL OR p_motivo IS NULL OR TRIM(p_motivo) = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La fecha, hora y motivo son obligatorios.';
+    END IF;
+
+    IF p_fecha < CURDATE() OR fn_validar_anticipacion_24h(p_fecha, p_hora) = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La cita debe solicitarse con al menos 24 horas de anticipacion.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_usuario_activo
+    FROM pacientes p
+    INNER JOIN usuarios u ON u.id_usuario = p.id_usuario
+    WHERE p.id_paciente = p_paciente_id AND u.activo = 1;
+
+    IF v_usuario_activo = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El paciente no existe o esta inactivo.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_usuario_activo
+    FROM medicos m
+    INNER JOIN usuarios u ON u.id_usuario = m.id_usuario
+    WHERE m.id_medico = p_medico_id AND u.activo = 1;
+
+    IF v_usuario_activo = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El medico no existe o esta inactivo.';
+    END IF;
+
+    SELECT id_medico INTO v_medico_bloqueo
+    FROM medicos
+    WHERE id_medico = p_medico_id
+    FOR UPDATE;
+
     SET v_dia_semana = DAYOFWEEK(p_fecha);
 
-    -- 1. Validar si el médico trabaja ese día y obtener sus horas (Ignorando excepciones por ahora)
-    SELECT MAX(hora_inicio), MAX(hora_fin) INTO v_hora_inicio, v_hora_fin
+    SELECT COUNT(*), MIN(hora_inicio), MAX(hora_fin)
+    INTO v_horarios_validos, v_hora_inicio, v_hora_fin
     FROM horarios_medicos
-    WHERE id_medico = p_medico_id 
-      AND dia_semana = v_dia_semana 
-      AND tipo = 'regular' 
-      AND activo = 1;
+    WHERE id_medico = p_medico_id
+      AND dia_semana = v_dia_semana
+      AND tipo = 'regular'
+      AND activo = 1
+      AND p_hora >= hora_inicio
+      AND p_hora < hora_fin;
 
-    -- 2. Validaciones lógicas
-    IF v_hora_inicio IS NULL THEN
+    IF v_horarios_validos = 0 THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'ERROR: El médico no atiende consultas en el día de la semana seleccionado.';
-    ELSEIF p_hora < v_hora_inicio OR p_hora > v_hora_fin THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: La hora solicitada está fuera del horario de atención del médico.';
-    ELSE
-        -- 3. Validar disponibilidad (que no choque con otra cita)
-        SELECT COUNT(*) INTO v_citas_existentes
-        FROM citas
-        WHERE id_medico = p_medico_id AND fecha = p_fecha AND hora = p_hora 
-          AND estado IN ('programada', 'confirmada', 'en_curso');
-
-        IF v_citas_existentes > 0 THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'ERROR: El médico ya tiene una cita reservada en esa fecha y hora.';
-        ELSE
-            -- 4. Registrar la cita
-            INSERT INTO citas (id_paciente, id_medico, fecha, hora, motivo, estado)
-            VALUES (p_paciente_id, p_medico_id, p_fecha, p_hora, p_motivo, 'programada');
-        END IF;
     END IF;
+
+    SELECT COUNT(*) INTO v_excepciones
+    FROM horarios_medicos
+    WHERE id_medico = p_medico_id
+      AND tipo = 'excepcion'
+      AND fecha = p_fecha
+      AND activo = 1
+      AND p_hora >= hora_inicio
+      AND p_hora < hora_fin;
+
+    IF v_excepciones > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El horario esta bloqueado por una excepcion del medico.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_citas_existentes
+    FROM citas
+    WHERE id_medico = p_medico_id
+      AND fecha = p_fecha
+      AND hora = p_hora
+      AND estado IN ('programada', 'confirmada', 'en_curso', 'reprogramada');
+
+    IF v_citas_existentes > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El medico ya tiene una cita reservada en esa fecha y hora.';
+    END IF;
+
+    INSERT INTO citas (id_paciente, id_medico, fecha, hora, motivo, estado)
+    VALUES (p_paciente_id, p_medico_id, p_fecha, p_hora, p_motivo, 'programada');
+
+    COMMIT;
 END //
 
 DELIMITER ;
@@ -71,19 +131,53 @@ CREATE PROCEDURE sp_cancelar_cita (
 )
 BEGIN
     DECLARE v_estado_actual VARCHAR(20);
-    SELECT estado INTO v_estado_actual FROM citas WHERE id_cita = p_id_cita;
+        DECLARE v_medico_bloqueo INT;
+        SELECT id_medico INTO v_medico_bloqueo
+        FROM medicos
+        WHERE id_medico = p_medico_id
+        FOR UPDATE;
 
-    IF v_estado_actual = 'cancelada' THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: La cita ya está cancelada.';
-    ELSEIF v_estado_actual = 'completada' THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: No se puede cancelar una cita completada.';
-    ELSE
-        UPDATE citas SET estado = 'cancelada' WHERE id_cita = p_id_cita;
-        INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
-        VALUES (p_id_cita, v_estado_actual, 'cancelada', p_id_usuario);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT estado, fecha, hora, id_paciente, id_medico
+    INTO v_estado_actual, v_fecha, v_hora, v_id_paciente, v_id_medico
+    FROM citas
+    WHERE id_cita = p_id_cita
+    FOR UPDATE;
+
+    IF v_estado_actual IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La cita no existe.';
+    ELSEIF NOT EXISTS (
+        SELECT 1
+        FROM usuarios u
+        LEFT JOIN pacientes p ON p.id_usuario = u.id_usuario
+        LEFT JOIN medicos m ON m.id_usuario = u.id_usuario
+        WHERE u.id_usuario = p_id_usuario
+          AND u.activo = 1
+          AND (u.rol = 'admin' OR p.id_paciente = v_id_paciente OR m.id_medico = v_id_medico)
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: No tiene autorizacion para cancelar esta cita.';
+    ELSEIF v_estado_actual IN ('cancelada', 'completada', 'en_curso') THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El estado actual de la cita no permite cancelarla.';
+    ELSEIF fn_validar_anticipacion_24h(v_fecha, v_hora) = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: Debe cancelar con al menos 24 horas de anticipacion.';
     END IF;
+
+    UPDATE citas SET estado = 'cancelada' WHERE id_cita = p_id_cita;
+    INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
+    VALUES (p_id_cita, v_estado_actual, 'cancelada', p_id_usuario);
+
+    COMMIT;
 END //
 
 DELIMITER ;
@@ -106,41 +200,109 @@ BEGIN
     DECLARE v_hora_actual TIME;
     DECLARE v_id_medico INT;
     DECLARE v_choques INT;
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_horario_valido INT DEFAULT 0;
+    DECLARE v_excepcion INT DEFAULT 0;
+    DECLARE v_medico_bloqueo INT;
+    DECLARE v_dia_semana TINYINT;
 
-    -- Obtenemos los datos actuales de la cita
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
     SELECT estado, fecha, hora, id_medico INTO v_estado_actual, v_fecha_actual, v_hora_actual, v_id_medico
-    FROM citas WHERE id_cita = p_id_cita;
+    FROM citas WHERE id_cita = p_id_cita FOR UPDATE;
 
-    -- 1. Validar restricción de tiempo con nuestra función (mínimo 24h antes)
-    IF fn_validar_anticipacion_24h(v_fecha_actual, v_hora_actual) = 0 THEN
+    IF v_estado_actual IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La cita no existe.';
+    ELSEIF fn_validar_anticipacion_24h(v_fecha_actual, v_hora_actual) = 0 THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'ERROR: Debe reprogramar con al menos 24 horas de anticipación.';
-        
-    -- 2. Validar que la cita no esté terminada o cancelada
-    ELSEIF v_estado_actual IN ('completada', 'cancelada') THEN
+    ELSEIF v_estado_actual NOT IN ('programada', 'confirmada', 'reprogramada') THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: No se puede reprogramar una cita completada o cancelada.';
-        
-    ELSE
-        -- 3. Validar si el médico tiene ese nuevo horario libre
-        SELECT COUNT(*) INTO v_choques FROM citas
-        WHERE id_medico = v_id_medico AND fecha = p_nueva_fecha AND hora = p_nueva_hora 
-        AND estado IN ('programada', 'confirmada', 'reprogramada');
-        
-        IF v_choques > 0 THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'ERROR: El médico ya tiene una cita en ese nuevo horario.';
-        ELSE
-            -- 4. Actualizar la cita y liberar el cupo anterior
-            UPDATE citas 
-            SET fecha = p_nueva_fecha, hora = p_nueva_hora, estado = 'reprogramada' 
-            WHERE id_cita = p_id_cita;
-            
-            -- 5. Registrar el movimiento en el historial
-            INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
-            VALUES (p_id_cita, v_estado_actual, 'reprogramada', p_id_usuario);
-        END IF;
+        SET MESSAGE_TEXT = 'ERROR: El estado actual de la cita no permite reprogramarla.';
+    ELSEIF p_nueva_fecha IS NULL OR p_nueva_hora IS NULL
+        OR fn_validar_anticipacion_24h(p_nueva_fecha, p_nueva_hora) = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La nueva fecha debe tener al menos 24 horas de anticipacion.';
     END IF;
+
+    SELECT id_medico INTO v_medico_bloqueo
+    FROM medicos
+    WHERE id_medico = v_id_medico
+    FOR UPDATE;
+
+    SELECT COUNT(*) INTO v_existe
+    FROM usuarios u
+    LEFT JOIN pacientes p ON p.id_usuario = u.id_usuario
+    LEFT JOIN medicos m ON m.id_usuario = u.id_usuario
+    WHERE u.id_usuario = p_id_usuario
+      AND u.activo = 1
+      AND (u.rol = 'admin' OR p.id_paciente = (
+          SELECT id_paciente FROM citas WHERE id_cita = p_id_cita
+      ) OR m.id_medico = v_id_medico);
+
+    IF v_existe = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: No tiene autorizacion para reprogramar esta cita.';
+    END IF;
+
+    SET v_dia_semana = DAYOFWEEK(p_nueva_fecha);
+
+    SELECT COUNT(*) INTO v_horario_valido
+    FROM horarios_medicos
+    WHERE id_medico = v_id_medico
+      AND dia_semana = v_dia_semana
+      AND tipo = 'regular'
+      AND activo = 1
+      AND p_nueva_hora >= hora_inicio
+      AND p_nueva_hora < hora_fin;
+
+    IF v_horario_valido = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La nueva hora esta fuera del horario del medico.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_excepcion
+    FROM horarios_medicos
+    WHERE id_medico = v_id_medico
+      AND tipo = 'excepcion'
+      AND fecha = p_nueva_fecha
+      AND activo = 1
+      AND p_nueva_hora >= hora_inicio
+      AND p_nueva_hora < hora_fin;
+
+    IF v_excepcion > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El nuevo horario esta bloqueado por una excepcion.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_choques
+    FROM citas
+    WHERE id_medico = v_id_medico
+      AND fecha = p_nueva_fecha
+      AND hora = p_nueva_hora
+      AND id_cita <> p_id_cita
+      AND estado IN ('programada', 'confirmada', 'en_curso', 'reprogramada');
+
+    IF v_choques > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El medico ya tiene una cita en ese nuevo horario.';
+    END IF;
+
+    UPDATE citas
+    SET fecha = p_nueva_fecha, hora = p_nueva_hora, estado = 'reprogramada'
+    WHERE id_cita = p_id_cita;
+
+    INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
+    VALUES (p_id_cita, v_estado_actual, 'reprogramada', p_id_usuario);
+
+    COMMIT;
 END //
 
 DELIMITER ;
@@ -180,12 +342,23 @@ CREATE PROCEDURE sp_actualizar_preferencias (
     IN p_rec_2h TINYINT(1)
 )
 BEGIN
-    UPDATE notificaciones_config
-    SET notif_email = p_notif_email,
-        notif_whatsapp = p_notif_whatsapp,
-        recordatorio_24h = p_rec_24h,
-        recordatorio_2h = p_rec_2h
-    WHERE id_usuario = p_id_usuario;
+     IF p_notif_email IS NULL OR p_notif_email NOT IN (0, 1)
+         OR p_notif_whatsapp IS NULL OR p_notif_whatsapp NOT IN (0, 1)
+         OR p_rec_24h IS NULL OR p_rec_24h NOT IN (0, 1)
+         OR p_rec_2h IS NULL OR p_rec_2h NOT IN (0, 1) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: Las preferencias deben ser 0 o 1.';
+    END IF;
+
+    INSERT INTO notificaciones_config
+        (id_usuario, notif_email, notif_whatsapp, recordatorio_24h, recordatorio_2h)
+    VALUES
+        (p_id_usuario, p_notif_email, p_notif_whatsapp, p_rec_24h, p_rec_2h)
+    ON DUPLICATE KEY UPDATE
+        notif_email = VALUES(notif_email),
+        notif_whatsapp = VALUES(notif_whatsapp),
+        recordatorio_24h = VALUES(recordatorio_24h),
+        recordatorio_2h = VALUES(recordatorio_2h);
 END //
 
 DELIMITER ;
@@ -201,9 +374,21 @@ CREATE PROCEDURE sp_actualizar_password (
     IN p_nuevo_password_hash VARCHAR(255)
 )
 BEGIN
-    UPDATE usuarios 
-    SET password_hash = p_nuevo_password_hash 
+    IF p_nuevo_password_hash IS NULL OR TRIM(p_nuevo_password_hash) = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El hash de la nueva contrasena es obligatorio.';
+    END IF;
+
+    UPDATE usuarios
+    SET password_hash = p_nuevo_password_hash
     WHERE email = p_email AND activo = 1;
+
+    IF ROW_COUNT() = 0 AND NOT EXISTS (
+        SELECT 1 FROM usuarios WHERE email = p_email AND activo = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: No existe un usuario activo con ese correo.';
+    END IF;
 END //
 
 DELIMITER ;
@@ -293,9 +478,9 @@ CREATE PROCEDURE sp_obtener_metricas_dashboard_paciente (
 )
 BEGIN
     SELECT 
-        SUM(CASE WHEN estado IN ('programada', 'confirmada', 'reprogramada') THEN 1 ELSE 0 END) AS citas_proximas,
-        SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END) AS citas_completadas,
-        SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) AS citas_canceladas
+        COALESCE(SUM(CASE WHEN TIMESTAMP(fecha, hora) >= NOW() AND estado IN ('programada', 'confirmada', 'reprogramada') THEN 1 ELSE 0 END), 0) AS citas_proximas,
+        COALESCE(SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END), 0) AS citas_completadas,
+        COALESCE(SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END), 0) AS citas_canceladas
     FROM citas
     WHERE id_paciente = p_id_paciente;
 END //
@@ -319,9 +504,20 @@ CREATE PROCEDURE sp_actualizar_perfil_paciente (
 BEGIN
     DECLARE v_id_usuario INT;
 
-    SELECT id_usuario INTO v_id_usuario FROM pacientes WHERE id_paciente = p_id_paciente;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
     START TRANSACTION;
+
+    SELECT id_usuario INTO v_id_usuario FROM pacientes WHERE id_paciente = p_id_paciente;
+
+    IF v_id_usuario IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El paciente no existe.';
+    END IF;
 
     -- Actualizar teléfono en la tabla usuarios
     UPDATE usuarios 
@@ -390,16 +586,17 @@ CREATE PROCEDURE sp_solicitar_recuperacion_password (
 BEGIN
     DECLARE v_id_usuario INT;
 
-    SELECT id_usuario INTO v_id_usuario FROM usuarios WHERE email = p_email AND activo = 1;
+    SELECT id_usuario INTO v_id_usuario
+    FROM usuarios
+    WHERE email = p_email AND activo = 1;
 
     IF v_id_usuario IS NULL THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: El correo electrónico no se encuentra registrado o está inactivo.';
-    ELSE
-        -- Insertar token que expira en 1 hora (INTERVAL 1 HOUR)
-        INSERT INTO tokens_recuperacion (id_usuario, token_hash, expira_en)
-        VALUES (v_id_usuario, p_token_hash, DATE_ADD(NOW(), INTERVAL 1 HOUR));
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El correo no existe o el usuario esta inactivo.';
     END IF;
+
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'ERROR: Recuperacion no disponible; el esquema no almacena tokens.';
 END //
 
 DELIMITER ;
@@ -415,10 +612,10 @@ CREATE PROCEDURE sp_obtener_metricas_dashboard_medico (
 )
 BEGIN
     SELECT 
-        SUM(CASE WHEN fecha = CURDATE() AND estado IN ('programada', 'confirmada') THEN 1 ELSE 0 END) AS citas_hoy,
-        SUM(CASE WHEN fecha = CURDATE() AND estado = 'en_curso' THEN 1 ELSE 0 END) AS citas_en_curso,
-        SUM(CASE WHEN fecha > CURDATE() AND estado IN ('programada', 'confirmada', 'reprogramada') THEN 1 ELSE 0 END) AS citas_proximas,
-        COUNT(DISTINCT id_paciente) AS total_pacientes_atendidos
+        COALESCE(SUM(CASE WHEN fecha = CURDATE() AND estado IN ('programada', 'confirmada') THEN 1 ELSE 0 END), 0) AS citas_hoy,
+        COALESCE(SUM(CASE WHEN fecha = CURDATE() AND estado = 'en_curso' THEN 1 ELSE 0 END), 0) AS citas_en_curso,
+        COALESCE(SUM(CASE WHEN fecha > CURDATE() AND estado IN ('programada', 'confirmada', 'reprogramada') THEN 1 ELSE 0 END), 0) AS citas_proximas,
+        COUNT(DISTINCT CASE WHEN estado = 'completada' THEN id_paciente END) AS total_pacientes_atendidos
     FROM citas
     WHERE id_medico = p_id_medico;
 END //
@@ -443,7 +640,14 @@ BEGIN
     DECLARE v_estado_ant VARCHAR(20);
     DECLARE v_id_usuario_medico INT;
 
-    -- Validar que la cita pertenezca al médico que intenta atenderla
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
     SELECT id_medico, estado INTO v_medico_cita, v_estado_ant 
     FROM citas 
     WHERE id_cita = p_id_cita;
@@ -451,23 +655,26 @@ BEGIN
     IF v_medico_cita IS NULL OR v_medico_cita != p_id_medico THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'ERROR: No tiene autorización para gestionar esta cita médica.';
-    ELSE
-        -- Obtener usuario_id para el historial
-        SELECT id_usuario INTO v_id_usuario_medico FROM medicos WHERE id_medico = p_id_medico;
-
-        START TRANSACTION;
-
-        UPDATE citas 
-        SET notas_medico = COALESCE(p_notas_medico, notas_medico),
-            estado = p_estado
-        WHERE id_cita = p_id_cita;
-
-        -- Registrar en el historial de auditoría
-        INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
-        VALUES (p_id_cita, v_estado_ant, p_estado, v_id_usuario_medico);
-
-        COMMIT;
+    ELSEIF v_estado_ant NOT IN ('programada', 'confirmada', 'en_curso') THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El estado actual no permite atender esta cita.';
+    ELSEIF (p_estado = 'en_curso' AND v_estado_ant = 'en_curso')
+        OR (p_estado = 'completada' AND v_estado_ant = 'completada') THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La cita ya se encuentra en ese estado.';
     END IF;
+
+    SELECT id_usuario INTO v_id_usuario_medico FROM medicos WHERE id_medico = p_id_medico;
+
+    UPDATE citas
+    SET notas_medico = COALESCE(p_notas_medico, notas_medico),
+        estado = p_estado
+    WHERE id_cita = p_id_cita;
+
+    INSERT INTO citas_historial (id_cita, estado_ant, estado_nuevo, cambiado_por)
+    VALUES (p_id_cita, v_estado_ant, p_estado, v_id_usuario_medico);
+
+    COMMIT;
 END //
 
 DELIMITER ;
@@ -486,18 +693,56 @@ CREATE PROCEDURE sp_guardar_horario_regular_medico (
     IN p_hora_fin TIME
 )
 BEGIN
-    IF p_hora_inicio >= p_hora_fin THEN
+    DECLARE v_horarios_existentes INT DEFAULT 0;
+    DECLARE v_medico_bloqueo INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+     IF p_dia_semana IS NULL OR p_dia_semana NOT BETWEEN 1 AND 7
+         OR p_hora_inicio IS NULL OR p_hora_fin IS NULL
+       OR p_hora_inicio >= p_hora_fin THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: La hora de inicio debe ser menor a la hora de fin.';
-    ELSE
-        -- Insertar o actualizar si ya existe un horario para ese día
-        INSERT INTO horarios_medicos (id_medico, tipo, dia_semana, hora_inicio, hora_fin, activo)
-        VALUES (p_id_medico, 'regular', p_dia_semana, p_hora_inicio, p_hora_fin, 1)
-        ON DUPLICATE KEY UPDATE 
-            hora_inicio = p_hora_inicio, 
-            hora_fin = p_hora_fin, 
-            activo = 1;
+        SET MESSAGE_TEXT = 'ERROR: El dia o el rango horario no es valido.';
     END IF;
+
+    SELECT id_medico INTO v_medico_bloqueo
+    FROM medicos
+    WHERE id_medico = p_id_medico
+    FOR UPDATE;
+
+    IF v_medico_bloqueo IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El medico no existe.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_horarios_existentes
+    FROM horarios_medicos
+    WHERE id_medico = p_id_medico
+      AND tipo = 'regular'
+      AND dia_semana = p_dia_semana;
+
+    IF v_horarios_existentes > 0 THEN
+        UPDATE horarios_medicos
+        SET hora_inicio = p_hora_inicio,
+            hora_fin = p_hora_fin,
+            activo = 1
+        WHERE id_medico = p_id_medico
+          AND tipo = 'regular'
+          AND dia_semana = p_dia_semana;
+    ELSE
+        INSERT INTO horarios_medicos
+            (id_medico, tipo, dia_semana, hora_inicio, hora_fin, activo)
+        VALUES
+            (p_id_medico, 'regular', p_dia_semana, p_hora_inicio, p_hora_fin, 1);
+    END IF;
+
+    COMMIT;
 END //
 
 DELIMITER ;
@@ -517,8 +762,51 @@ CREATE PROCEDURE sp_bloquear_fecha_medico (
     IN p_motivo VARCHAR(255)
 )
 BEGIN
+    DECLARE v_medico_bloqueo INT;
+    DECLARE v_citas_afectadas INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    IF p_fecha IS NULL OR p_fecha < CURDATE()
+       OR p_hora_inicio IS NULL OR p_hora_fin IS NULL
+       OR p_hora_inicio >= p_hora_fin THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La fecha o el rango horario de la excepcion no es valido.';
+    END IF;
+
+    SELECT id_medico INTO v_medico_bloqueo
+    FROM medicos
+    WHERE id_medico = p_id_medico
+    FOR UPDATE;
+
+    IF v_medico_bloqueo IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El medico no existe.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_citas_afectadas
+    FROM citas
+    WHERE id_medico = p_id_medico
+      AND fecha = p_fecha
+      AND hora >= p_hora_inicio
+      AND hora < p_hora_fin
+      AND estado IN ('programada', 'confirmada', 'en_curso', 'reprogramada');
+
+    IF v_citas_afectadas > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El rango contiene citas reservadas.';
+    END IF;
+
     INSERT INTO horarios_medicos (id_medico, tipo, fecha, hora_inicio, hora_fin, motivo, activo)
     VALUES (p_id_medico, 'excepcion', p_fecha, p_hora_inicio, p_hora_fin, p_motivo, 1);
+
+    COMMIT;
 END //
 
 DELIMITER ;
@@ -563,10 +851,10 @@ DELIMITER //
 CREATE PROCEDURE sp_obtener_metricas_dashboard_admin ()
 BEGIN
     SELECT 
-        SUM(CASE WHEN fecha = CURDATE() THEN 1 ELSE 0 END) AS citas_hoy,
-        SUM(CASE WHEN estado IN ('programada', 'confirmada') THEN 1 ELSE 0 END) AS citas_pendientes,
+        COALESCE(SUM(CASE WHEN fecha = CURDATE() THEN 1 ELSE 0 END), 0) AS citas_hoy,
+        COALESCE(SUM(CASE WHEN TIMESTAMP(fecha, hora) >= NOW() AND estado IN ('programada', 'confirmada', 'reprogramada') THEN 1 ELSE 0 END), 0) AS citas_pendientes,
         (SELECT COUNT(*) FROM pacientes) AS total_pacientes,
-        SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) AS citas_canceladas
+        COALESCE(SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END), 0) AS citas_canceladas
     FROM citas;
 END //
 
@@ -625,9 +913,22 @@ CREATE PROCEDURE sp_cambiar_estado_usuario (
     IN p_nuevo_estado TINYINT(1) -- 1 = Activo, 0 = Inactivo
 )
 BEGIN
-    UPDATE usuarios 
-    SET activo = p_nuevo_estado 
-    WHERE id_usuario = p_id_usuario;
+    IF p_nuevo_estado IS NULL OR p_nuevo_estado NOT IN (0, 1) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: El estado debe ser 0 o 1.';
+    END IF;
+
+    UPDATE usuarios
+    SET activo = p_nuevo_estado
+    WHERE id_usuario = p_id_usuario
+      AND rol IN ('paciente', 'medico');
+
+    IF ROW_COUNT() = 0 AND NOT EXISTS (
+        SELECT 1 FROM usuarios WHERE id_usuario = p_id_usuario AND rol IN ('paciente', 'medico')
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: No existe un paciente o medico con ese identificador.';
+    END IF;
 END //
 
 DELIMITER ;
@@ -647,9 +948,31 @@ CREATE PROCEDURE sp_admin_cambiar_estado_cita (
 BEGIN
     DECLARE v_estado_ant VARCHAR(20);
 
-    SELECT estado INTO v_estado_ant FROM citas WHERE id_cita = p_id_cita;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
     START TRANSACTION;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM usuarios
+        WHERE id_usuario = p_id_admin AND rol = 'admin' AND activo = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: Se requiere un administrador activo.';
+    END IF;
+
+    SELECT estado INTO v_estado_ant
+    FROM citas
+    WHERE id_cita = p_id_cita
+    FOR UPDATE;
+
+    IF v_estado_ant IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'ERROR: La cita no existe.';
+    END IF;
 
     UPDATE citas 
     SET estado = p_nuevo_estado 
