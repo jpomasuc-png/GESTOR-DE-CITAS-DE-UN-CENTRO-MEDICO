@@ -1,9 +1,15 @@
+-- =============================================================
+-- 04. VISTAS
+-- Requiere: 01_esquema.sql y 02_funciones.sql
+-- =============================================================
+SET NAMES utf8mb4;
 USE sistema_citas;
 
 -- ─────────────────────────────────────────────────────────────
 -- 1. VISTA: Agenda del Paciente (Para el Dashboard del Paciente)
 -- Muestra todas las citas con los datos del médico, especialidad y estado.
 -- ─────────────────────────────────────────────────────────────
+DROP VIEW IF EXISTS vw_agenda_paciente;
 CREATE VIEW vw_agenda_paciente AS
 SELECT 
     c.id_cita,
@@ -36,6 +42,7 @@ INNER JOIN especialidades e ON m.id_especialidad = e.id_especialidad;
 -- 2. VISTA: Agenda Diaria y Consultas del Médico
 -- Diseñada para la vista del médico, incluyendo edad y datos del paciente.
 -- ─────────────────────────────────────────────────────────────
+DROP VIEW IF EXISTS vw_agenda_medico;
 CREATE VIEW vw_agenda_medico AS
 SELECT 
     c.id_cita,
@@ -68,6 +75,7 @@ INNER JOIN usuarios u_pac ON p.id_usuario = u_pac.id_usuario;
 -- 3. VISTA: Lista Directiva de Médicos y sus Horarios
 -- Consolida los datos del profesional, su especialidad y días/horas de atención.
 -- ─────────────────────────────────────────────────────────────
+DROP VIEW IF EXISTS vw_medicos_horarios;
 CREATE VIEW vw_medicos_horarios AS
 SELECT 
     m.id_medico,
@@ -105,6 +113,7 @@ WHERE u.activo = 1;
 -- Filtra las citas activas de las próximas 24 horas y cruza las preferencias
 -- de notificación del usuario para usarse en un script o tarea programada.
 -- ─────────────────────────────────────────────────────────────
+DROP VIEW IF EXISTS vw_recordatorios_pendientes;
 CREATE VIEW vw_recordatorios_pendientes AS
 SELECT 
     c.id_cita,
@@ -138,6 +147,7 @@ WHERE c.estado IN ('programada', 'confirmada', 'reprogramada')
 -- 5. VISTA: Reportes y Métricas para el Administrador
 -- Ofrece un consolidado general del sistema.
 -- ─────────────────────────────────────────────────────────────
+DROP VIEW IF EXISTS vw_reporte_general_citas;
 CREATE VIEW vw_reporte_general_citas AS
 SELECT 
     c.id_cita,
@@ -160,6 +170,7 @@ INNER JOIN usuarios u_pac ON p.id_usuario = u_pac.id_usuario;
 -- Permite al médico ver todos sus pacientes con citas activas.
 -- ─────────────────────────────────────────────────────────────
 
+DROP VIEW IF EXISTS vw_vista_medico_pacientes;
 CREATE VIEW vw_vista_medico_pacientes AS
 SELECT DISTINCT
         m.id_medico,
@@ -184,6 +195,7 @@ WHERE c.estado IN ('programada', 'confirmada', 'en_curso', 'reprogramada')
 -- Permite al administrador ver todos los usuarios con rol de médico o paciente.
 -- ─────────────────────────────────────────────────────────────
 
+DROP VIEW IF EXISTS vw_vista_admin_medicosypacientes;
 CREATE VIEW vw_vista_admin_medicosypacientes AS
 SELECT 
     u.id_usuario,

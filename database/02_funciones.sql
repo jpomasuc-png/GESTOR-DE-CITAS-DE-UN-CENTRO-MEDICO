@@ -1,3 +1,8 @@
+-- =============================================================
+-- 02. FUNCIONES DEFINIDAS POR EL USUARIO
+-- Requiere: 01_esquema.sql
+-- =============================================================
+SET NAMES utf8mb4;
 USE sistema_citas;
 -- =============================================================
 -- FUNCIONES DEFINIDAS PARA EL USUARIO
@@ -8,6 +13,7 @@ USE sistema_citas;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP FUNCTION IF EXISTS fn_calcular_edad;
 CREATE FUNCTION fn_calcular_edad(p_fecha_nacimiento DATE) 
 RETURNS INT 
 NOT DETERMINISTIC
@@ -22,6 +28,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP FUNCTION IF EXISTS fn_validar_anticipacion_24h;
 CREATE FUNCTION fn_validar_anticipacion_24h(p_fecha DATE, p_hora TIME) 
 RETURNS TINYINT(1)
 NOT DETERMINISTIC
@@ -52,6 +59,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP FUNCTION IF EXISTS fn_obtener_perfil_paciente_json;
 CREATE FUNCTION fn_obtener_perfil_paciente_json(p_id_paciente INT) 
 RETURNS JSON
 READS SQL DATA
@@ -86,6 +94,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP FUNCTION IF EXISTS fn_obtener_perfil_medico_json;
 CREATE FUNCTION fn_obtener_perfil_medico_json(p_id_medico INT) 
 RETURNS JSON
 READS SQL DATA
@@ -118,6 +127,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP FUNCTION IF EXISTS fn_obtener_tasa_completacion;
 CREATE FUNCTION fn_obtener_tasa_completacion() 
 RETURNS DECIMAL(5,2)
 READS SQL DATA

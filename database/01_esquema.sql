@@ -1,5 +1,12 @@
 DROP DATABASE IF EXISTS sistema_citas;
-CREATE DATABASE IF NOT EXISTS sistema_citas;
+CREATE DATABASE IF NOT EXISTS sistema_citas
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+-- =============================================================
+-- 01. ESQUEMA DE LA BASE DE DATOS + DATOS DE PRUEBA
+-- Instalacion completa: ejecutar este archivo primero.
+-- =============================================================
+SET NAMES utf8mb4;
 USE sistema_citas;
 
 -- ─────────────────────────────────────────────────────────────
@@ -73,6 +80,7 @@ CREATE TABLE horarios_medicos (
   activo       TINYINT(1) NOT NULL DEFAULT 1,
   creado_en    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_horario),
+  INDEX idx_horarios_medico_dia (id_medico, dia_semana, tipo, activo),
   CONSTRAINT fk_horario_medico
     FOREIGN KEY (id_medico) REFERENCES medicos (id_medico) ON DELETE CASCADE
 );
@@ -92,6 +100,9 @@ CREATE TABLE citas (
   creado_en     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id_cita),
+  INDEX idx_citas_medico_fecha (id_medico, fecha, hora),
+  INDEX idx_citas_paciente_fecha (id_paciente, fecha),
+  INDEX idx_citas_estado (estado),
   CONSTRAINT fk_cita_paciente
     FOREIGN KEY (id_paciente) REFERENCES pacientes (id_paciente),
   CONSTRAINT fk_cita_medico

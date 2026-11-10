@@ -1,3 +1,8 @@
+-- =============================================================
+-- 03. PROCEDIMIENTOS ALMACENADOS
+-- Requiere: 01_esquema.sql y 02_funciones.sql
+-- =============================================================
+SET NAMES utf8mb4;
 USE sistema_citas;
 -- =============================================================
 -- PROCEDIMIENTOS ALMACENADOS
@@ -9,6 +14,7 @@ USE sistema_citas;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_registrar_cita;
 CREATE PROCEDURE sp_registrar_cita (
     IN p_paciente_id INT,
     IN p_medico_id INT,
@@ -17,9 +23,8 @@ CREATE PROCEDURE sp_registrar_cita (
     IN p_motivo TEXT
 )
 BEGIN
-    DECLARE v_hora_inicio TIME;
-    DECLARE v_hora_fin TIME;
     DECLARE v_horarios_validos INT DEFAULT 0;
+    DECLARE v_dia_valido INT DEFAULT 0;
     DECLARE v_citas_existentes INT;
     DECLARE v_excepciones INT DEFAULT 0;
     DECLARE v_usuario_activo INT DEFAULT 0;
@@ -71,8 +76,19 @@ BEGIN
 
     SET v_dia_semana = DAYOFWEEK(p_fecha);
 
-    SELECT COUNT(*), MIN(hora_inicio), MAX(hora_fin)
-    INTO v_horarios_validos, v_hora_inicio, v_hora_fin
+    SELECT COUNT(*) INTO v_dia_valido
+    FROM horarios_medicos
+    WHERE id_medico = p_medico_id
+      AND dia_semana = v_dia_semana
+      AND tipo = 'regular'
+      AND activo = 1;
+
+    IF v_dia_valido = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'ERROR: El médico no atiende consultas en el día de la semana seleccionado.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_horarios_validos
     FROM horarios_medicos
     WHERE id_medico = p_medico_id
       AND dia_semana = v_dia_semana
@@ -83,7 +99,7 @@ BEGIN
 
     IF v_horarios_validos = 0 THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'ERROR: El médico no atiende consultas en el día de la semana seleccionado.';
+        SET MESSAGE_TEXT = 'ERROR: La hora solicitada está fuera del horario de atención del médico.';
     END IF;
 
     SELECT COUNT(*) INTO v_excepciones
@@ -125,6 +141,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_cancelar_cita;
 CREATE PROCEDURE sp_cancelar_cita (
     IN p_id_cita INT ,
     IN p_id_usuario INT 
@@ -190,6 +207,7 @@ DELIMITER ;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_reprogramar_cita;
 CREATE PROCEDURE sp_reprogramar_cita (
     IN p_id_cita INT,
     IN p_nueva_fecha DATE,
@@ -315,6 +333,7 @@ DELIMITER ;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_listar_medicos_por_especialidad;
 CREATE PROCEDURE sp_listar_medicos_por_especialidad (
     IN p_id_especialidad TINYINT
 )
@@ -336,6 +355,7 @@ DELIMITER ;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_actualizar_preferencias;
 CREATE PROCEDURE sp_actualizar_preferencias (
     IN p_id_usuario INT,
     IN p_notif_email TINYINT(1),
@@ -371,6 +391,7 @@ DELIMITER ;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_actualizar_password;
 CREATE PROCEDURE sp_actualizar_password (
     IN p_email VARCHAR(150),
     IN p_nuevo_password_hash VARCHAR(255)
@@ -401,6 +422,7 @@ DELIMITER ;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_obtener_citas_paciente;
 CREATE PROCEDURE sp_obtener_citas_paciente (
     IN p_id_paciente INT
 )
@@ -430,6 +452,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_registrar_paciente;
 CREATE PROCEDURE sp_registrar_paciente (
     IN p_nombre VARCHAR(120),
     IN p_email VARCHAR(150),
@@ -475,6 +498,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_obtener_metricas_dashboard_paciente;
 CREATE PROCEDURE sp_obtener_metricas_dashboard_paciente (
     IN p_id_paciente INT
 )
@@ -496,6 +520,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_actualizar_perfil_paciente;
 CREATE PROCEDURE sp_actualizar_perfil_paciente (
     IN p_id_paciente INT,
     IN p_telefono VARCHAR(20),
@@ -545,6 +570,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_obtener_horarios_disponibles_medico;
 CREATE PROCEDURE sp_obtener_horarios_disponibles_medico (
     IN p_id_medico INT,
     IN p_fecha DATE
@@ -581,6 +607,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_solicitar_recuperacion_password;
 CREATE PROCEDURE sp_solicitar_recuperacion_password (
     IN p_email VARCHAR(150),
     IN p_token_hash CHAR(64)
@@ -609,6 +636,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_obtener_metricas_dashboard_medico;
 CREATE PROCEDURE sp_obtener_metricas_dashboard_medico (
     IN p_id_medico INT
 )
@@ -631,6 +659,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_atender_cita_medica;
 CREATE PROCEDURE sp_atender_cita_medica (
     IN p_id_cita INT,
     IN p_id_medico INT,
@@ -657,7 +686,7 @@ BEGIN
     IF v_medico_cita IS NULL OR v_medico_cita != p_id_medico THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'ERROR: No tiene autorización para gestionar esta cita médica.';
-    ELSEIF v_estado_ant NOT IN ('programada', 'confirmada', 'en_curso') THEN
+    ELSEIF v_estado_ant NOT IN ('programada', 'confirmada', 'reprogramada', 'en_curso') THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'ERROR: El estado actual no permite atender esta cita.';
     ELSEIF (p_estado = 'en_curso' AND v_estado_ant = 'en_curso')
@@ -688,6 +717,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_guardar_horario_regular_medico;
 CREATE PROCEDURE sp_guardar_horario_regular_medico (
     IN p_id_medico INT,
     IN p_dia_semana TINYINT, -- 1=Domingo, 2=Lunes, ..., 7=Sábado
@@ -756,6 +786,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_bloquear_fecha_medico;
 CREATE PROCEDURE sp_bloquear_fecha_medico (
     IN p_id_medico INT,
     IN p_fecha DATE,
@@ -820,6 +851,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_listar_pacientes_por_medico;
 CREATE PROCEDURE sp_listar_pacientes_por_medico (
     IN p_id_medico INT
 )
@@ -850,6 +882,7 @@ USE sistema_citas;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_obtener_metricas_dashboard_admin;
 CREATE PROCEDURE sp_obtener_metricas_dashboard_admin ()
 BEGIN
     SELECT 
@@ -869,6 +902,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_registrar_medico;
 CREATE PROCEDURE sp_registrar_medico (
     IN p_nombre VARCHAR(120),
     IN p_email VARCHAR(150),
@@ -910,6 +944,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_cambiar_estado_usuario;
 CREATE PROCEDURE sp_cambiar_estado_usuario (
     IN p_id_usuario INT,
     IN p_nuevo_estado TINYINT(1) -- 1 = Activo, 0 = Inactivo
@@ -942,6 +977,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_admin_cambiar_estado_cita;
 CREATE PROCEDURE sp_admin_cambiar_estado_cita (
     IN p_id_cita INT,
     IN p_nuevo_estado ENUM('programada','confirmada','en_curso','completada','cancelada','reprogramada'),
@@ -996,6 +1032,7 @@ DELIMITER ;
 -- ─────────────────────────────────────────────────────────────
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS sp_obtener_reportes_estadisticos;
 CREATE PROCEDURE sp_obtener_reportes_estadisticos ()
 BEGIN
     -- Resultado 1: Distribución de Citas por Estado
