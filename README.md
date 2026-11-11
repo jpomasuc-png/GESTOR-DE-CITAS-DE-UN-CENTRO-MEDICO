@@ -25,7 +25,11 @@ sistema-gestion-citas/
 │   └── helpers/                       # Utilidades y validaciones
 ├── frontend/                          # Interfaz de usuario
 │   ├── assets/                        # CSS y JS del cliente
-│   ├── views/                         # Vistas HTML por módulo
+│   ├── views/
+│   │   ├── admin/                     # Panel general, citas, médicos, pacientes y reportes
+│   │   ├── medico/                    # Panel, agenda de citas y horarios
+│   │   ├── paciente/                  # Panel, citas, agenda, notificaciones y perfil
+│   │   └── auth/                      # Inicio de sesión y registro
 │   └── index.html                     # Punto de entrada
 ├── docs/                              # Documentación
 └── README.md
@@ -72,4 +76,7 @@ mysql --force -u root --default-character-set=utf8mb4 < database/05_transactions
 - Base de datos: esquema, funciones, procedimientos, vistas y pruebas de
   transacciones verificados.
 - Backend: estructura creada, archivos PHP aún vacíos.
-- Frontend: vistas estáticas con datos de ejemplo; falta conectar la API.
+- Frontend: vistas estáticas con datos de ejemplo para pacientes, médicos y
+  administradores; falta conectar formularios, filtros y acciones con la API.
+  Los módulos de médico y administrador reutilizan el diseño y la estructura
+  visual del módulo de paciente.

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citas - Centro Salud</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body class="admin-appointments">
+  <div class="app-shell">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Menú principal">
+      <div class="sidebar-header">
+        <div class="brand-logo" aria-hidden="true">CS</div>
+        <div class="brand-text">
+          <p class="brand-name">Centro Salud</p>
+          <p class="brand-subtitle">Sistema Médico</p>
+        </div>
+        <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Cerrar menú">×</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15V9h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Panel general
+        </a>
+        <a href="citas.html" class="nav-item active" aria-current="page">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Citas
+        </a>
+        <a href="pacientes.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 14c0-2.5 1.8-4 4.5-4s4.5 1.5 4.5 4M11 3a2.2 2.2 0 010 4.3M12 10c1.6.4 2.5 1.7 2.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Pacientes
+        </a>
+        <a href="medicos.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Médicos
+        </a>
+        <a href="reportes.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14h12M4 12V8m4 4V3m4 9V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Reportes
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" aria-hidden="true">A</div>
+          <div class="user-info">
+            <p class="user-name">Administrador</p>
+            <span class="role-badge role-badge--admin">Administrador</span>
+          </div>
+        </div>
+        <a href="../auth/login.html" class="btn-ghost sidebar-logout">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <div class="topbar-content">
+          <h1 class="topbar-title">Citas</h1>
+          <p class="topbar-date" id="current-date"></p>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="appointments-heading">
+          <h2>Todas las citas</h2>
+          <form id="appointment-filters">
+            <label class="sr-only" for="filter-status">Filtrar por estado</label>
+            <select id="filter-status" name="estado">
+              <option value="">Todos los estados</option>
+              <option value="programada">Programada</option>
+              <option value="confirmada">Confirmada</option>
+              <option value="en_curso">En curso</option>
+              <option value="completada">Completada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </form>
+        </div>
+
+        <section class="card appointments-card" id="appointment-list" aria-label="Listado de citas">
+          <div class="appointments-table-wrap">
+            <table class="appointments-table">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Paciente</th>
+                  <th scope="col">Médico</th>
+                  <th scope="col">Fecha / hora</th>
+                  <th scope="col">Motivo</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Cambiar estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="appointment-row" data-estado="confirmada">
+                  <td class="appointment-id">A001</td>
+                  <td class="appointment-patient">Ana María García</td>
+                  <td class="appointment-doctor">Dra. Carmen Ruiz<span>Medicina General</span></td>
+                  <td class="appointment-date">2026-09-04<br>08:30</td>
+                  <td class="appointment-reason" title="Control de presión arterial">Control de presión arterial</td>
+                  <td><span class="badge badge-green" data-status-badge>Confirmada</span></td>
+                  <td><label class="sr-only" for="status-a001">Cambiar estado de la cita A001</label><select id="status-a001" class="appointment-status-select" data-status-select><option value="programada">Programada</option><option value="confirmada" selected>Confirmada</option><option value="en_curso">En curso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></td>
+                </tr>
+                <tr class="appointment-row" data-estado="programada">
+                  <td class="appointment-id">A002</td>
+                  <td class="appointment-patient">Ana María García</td>
+                  <td class="appointment-doctor">Dr. Alejandro Torres<span>Cardiología</span></td>
+                  <td class="appointment-date">2026-09-10<br>10:00</td>
+                  <td class="appointment-reason">Electrocardiograma</td>
+                  <td><span class="badge badge-blue" data-status-badge>Programada</span></td>
+                  <td><label class="sr-only" for="status-a002">Cambiar estado de la cita A002</label><select id="status-a002" class="appointment-status-select" data-status-select><option value="programada" selected>Programada</option><option value="confirmada">Confirmada</option><option value="en_curso">En curso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></td>
+                </tr>
+                <tr class="appointment-row" data-estado="completada">
+                  <td class="appointment-id">A003</td>
+                  <td class="appointment-patient">Ana María García</td>
+                  <td class="appointment-doctor">Dra. Carmen Ruiz<span>Medicina General</span></td>
+                  <td class="appointment-date">2026-08-20<br>09:00</td>
+                  <td class="appointment-reason">Consulta de rutina</td>
+                  <td><span class="badge badge-gray" data-status-badge>Completada</span></td>
+                  <td><label class="sr-only" for="status-a003">Cambiar estado de la cita A003</label><select id="status-a003" class="appointment-status-select" data-status-select><option value="programada">Programada</option><option value="confirmada">Confirmada</option><option value="en_curso">En curso</option><option value="completada" selected>Completada</option><option value="cancelada">Cancelada</option></select></td>
+                </tr>
+                <tr class="appointment-row" data-estado="en_curso">
+                  <td class="appointment-id">A004</td>
+                  <td class="appointment-patient">Carlos Huanca</td>
+                  <td class="appointment-doctor">Dra. Carmen Ruiz<span>Medicina General</span></td>
+                  <td class="appointment-date">2026-09-04<br>09:00</td>
+                  <td class="appointment-reason">Fiebre persistente</td>
+                  <td><span class="badge badge-amber" data-status-badge>En curso</span></td>
+                  <td><label class="sr-only" for="status-a004">Cambiar estado de la cita A004</label><select id="status-a004" class="appointment-status-select" data-status-select><option value="programada">Programada</option><option value="confirmada">Confirmada</option><option value="en_curso" selected>En curso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></td>
+                </tr>
+                <tr class="appointment-row" data-estado="programada">
+                  <td class="appointment-id">A005</td>
+                  <td class="appointment-patient">Beatriz Salazar</td>
+                  <td class="appointment-doctor">Dra. Valentina Ríos<span>Ginecología</span></td>
+                  <td class="appointment-date">2026-09-04<br>11:30</td>
+                  <td class="appointment-reason">Control prenatal</td>
+                  <td><span class="badge badge-blue" data-status-badge>Programada</span></td>
+                  <td><label class="sr-only" for="status-a005">Cambiar estado de la cita A005</label><select id="status-a005" class="appointment-status-select" data-status-select><option value="programada" selected>Programada</option><option value="confirmada">Confirmada</option><option value="en_curso">En curso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="../../assets/js/main.js"></script>
+</body>
+</html>

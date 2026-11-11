@@ -4,32 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel Principal - Centro Salud</title>
-  <!-- Corregimos la ruta del CSS (solo subimos un nivel) -->
   <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 
   <div class="app-shell">
-    
-    <!-- Fondo oscuro para móviles -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
-    
-    <!-- MENÚ LATERAL (SIDEBAR CORRECTO) -->
-    <aside class="sidebar" id="sidebar">
+
+    <aside class="sidebar" id="sidebar" aria-label="Menú principal">
       <div class="sidebar-header">
-        <div style="width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">CS</div>
-        <div>
-          <p style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Centro Salud</p>
-          <p style="font-size: 0.75rem; color: var(--text-muted);">Sistema Médico</p>
+        <div class="brand-logo" aria-hidden="true">CS</div>
+        <div class="brand-text">
+          <p class="brand-name">Centro Salud</p>
+          <p class="brand-subtitle">Sistema Médico</p>
         </div>
+        <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Cerrar menú">×</button>
       </div>
-      
+
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="nav-item active">
+        <a href="dashboard.html" class="nav-item active" aria-current="page">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15V9h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
           Panel
         </a>
-        <!-- Corregimos las rutas del menú (quitando "citas/") -->
         <a href="mis_citas.html" class="nav-item">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Mis citas
@@ -49,128 +45,89 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <div style="width: 36px; height: 36px; background: var(--secondary); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">AM</div>
-          <div>
-            <p style="font-size: 0.875rem; font-weight: 600;">Ana María García</p>
-            <span style="font-size: 0.65rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Paciente</span>
+        <div class="user-profile">
+          <div class="user-avatar" aria-hidden="true">AM</div>
+          <div class="user-info">
+            <p class="user-name">Ana María García</p>
+            <span class="role-badge">Paciente</span>
           </div>
         </div>
-        <!-- Esta ruta sí sube un nivel para entrar a "auth" -->
-        <a href="../auth/login.html" class="btn-ghost" style="text-decoration: none;">
+        <a href="../auth/login.html" class="btn-ghost sidebar-logout">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Cerrar sesión
         </a>
       </div>
     </aside>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <div class="main-wrapper">
-      
-      <!-- BARRA SUPERIOR -->
       <header class="topbar">
-        <button class="menu-toggle" id="menu-toggle">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
         <div class="topbar-content">
-          <h1 style="font-size: 0.875rem; font-weight: 600;">Panel Principal</h1>
-          <p style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text-muted);" id="current-date"></p>
+          <h1 class="topbar-title">Panel Principal</h1>
+          <p class="topbar-date" id="current-date"></p>
         </div>
       </header>
 
-      <!-- ÁREA DE DATOS -->
       <main class="content-area">
-        
-        <div style="margin-bottom: 1.5rem;">
-          <h2 style="font-size: 1.5rem; font-weight: 700;">Hola, Ana</h2>
-          <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Resumen de tu actividad médica</p>
+        <div class="page">
+          <div class="page-header">
+            <h2 class="page-title">Hola, Ana</h2>
+            <p class="page-subtitle">Resumen de tu actividad médica</p>
+          </div>
+
+          <section class="metrics-grid" aria-label="Resumen de actividad">
+            <div class="stat-card blue">
+              <span class="stat-label">Próximas citas</span>
+              <span class="stat-value">2</span>
+              <span class="stat-sub">Pendientes</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Completadas</span>
+              <span class="stat-value">5</span>
+              <span class="stat-sub">Historial</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Canceladas</span>
+              <span class="stat-value">1</span>
+              <span class="stat-sub">Total</span>
+            </div>
+          </section>
+
+          <section class="card" aria-label="Próximas citas">
+            <div class="card-header">Próximas citas</div>
+            <div class="list-item">
+              <div class="date-chip" aria-hidden="true">
+                <span class="date-chip-day">12</span>
+                <span class="date-chip-month">Oct</span>
+              </div>
+              <div class="list-item-body">
+                <p class="list-item-title">Dr. Alejandro Torres</p>
+                <p class="list-item-meta">Cardiología · 10:00 AM</p>
+                <p class="list-item-text">Electrocardiograma</p>
+              </div>
+              <span class="badge badge-blue">Programada</span>
+            </div>
+
+            <div class="list-item">
+              <div class="date-chip" aria-hidden="true">
+                <span class="date-chip-day">15</span>
+                <span class="date-chip-month">Oct</span>
+              </div>
+              <div class="list-item-body">
+                <p class="list-item-title">Dra. Valentina Ríos</p>
+                <p class="list-item-meta">Ginecología · 11:30 AM</p>
+                <p class="list-item-text">Control anual</p>
+              </div>
+              <span class="badge badge-blue">Programada</span>
+            </div>
+          </section>
         </div>
-
-        <!-- Tarjetas de Estadísticas -->
-        <section class="metrics-grid">
-          <div class="stat-card blue">
-            <span class="stat-label">Próximas citas</span>
-            <span class="stat-value">2</span>
-            <span class="stat-sub">Pendientes</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Completadas</span>
-            <span class="stat-value">5</span>
-            <span class="stat-sub">Historial</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Canceladas</span>
-            <span class="stat-value">1</span>
-            <span class="stat-sub">Total</span>
-          </div>
-        </section>
-
-        <!-- Lista de Próximas Citas -->
-        <section class="card">
-          <div class="card-header">Próximas citas</div>
-          <div>
-            <!-- Fila de cita de ejemplo 1 -->
-            <div class="list-item">
-              <div style="width: 48px; height: 48px; background: var(--secondary); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <span style="font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.75rem; color: var(--primary);">12</span>
-                <span style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase;">Oct</span>
-              </div>
-              <div style="flex: 1;">
-                <p style="font-size: 0.875rem; font-weight: 500;">Dr. Alejandro Torres</p>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Cardiología · 10:00 AM</p>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Electrocardiograma</p>
-              </div>
-              <span class="badge badge-blue">Programada</span>
-            </div>
-            
-            <!-- Fila de cita de ejemplo 2 -->
-            <div class="list-item">
-              <div style="width: 48px; height: 48px; background: var(--secondary); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <span style="font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.75rem; color: var(--primary);">15</span>
-                <span style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase;">Oct</span>
-              </div>
-              <div style="flex: 1;">
-                <p style="font-size: 0.875rem; font-weight: 500;">Dra. Valentina Ríos</p>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Ginecología · 11:30 AM</p>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Control anual</p>
-              </div>
-              <span class="badge badge-blue">Programada</span>
-            </div>
-          </div>
-        </section>
-
       </main>
     </div>
   </div>
 
-  <!-- Corregimos la ruta del JS (solo subimos un nivel) -->
-  <script src="../assets/js/main.js"></script>
-  
-  <script>
-    // Pequeño script para poner la fecha actual en la cabecera
-    const dateElement = document.getElementById('current-date');
-    if (dateElement) {
-        dateElement.textContent = new Date().toISOString().split('T')[0];
-    }
-
-    // Interacción del menú móvil
-    document.addEventListener("DOMContentLoaded", () => {
-      const menuToggle = document.getElementById("menu-toggle");
-      const sidebar = document.getElementById("sidebar");
-      const overlay = document.getElementById("sidebar-overlay");
-
-      if (menuToggle && sidebar && overlay) {
-        menuToggle.addEventListener("click", () => {
-          sidebar.classList.add("open");
-          overlay.classList.add("open");
-        });
-
-        overlay.addEventListener("click", () => {
-          sidebar.classList.remove("open");
-          overlay.classList.remove("open");
-        });
-      }
-    });
-  </script>
+  <script src="../../assets/js/main.js"></script>
 </body>
 </html>

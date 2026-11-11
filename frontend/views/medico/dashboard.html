@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel - Centro Salud</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Menú principal">
+      <div class="sidebar-header">
+        <div class="brand-logo" aria-hidden="true">CS</div>
+        <div class="brand-text">
+          <p class="brand-name">Centro Salud</p>
+          <p class="brand-subtitle">Sistema Médico</p>
+        </div>
+        <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Cerrar menú">×</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item active" aria-current="page">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15V9h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Panel
+        </a>
+        <a href="agenda.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Agenda del día
+        </a>
+        <a href="citas.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 8h10M3 12h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Todas las citas
+        </a>
+        <a href="pacientes.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 14c0-2.5 1.8-4 4.5-4s4.5 1.5 4.5 4M11 3a2.2 2.2 0 010 4.3M12 10c1.6.4 2.5 1.7 2.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Pacientes
+        </a>
+        <a href="perfil.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Mi perfil
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" aria-hidden="true">CR</div>
+          <div class="user-info">
+            <p class="user-name">Dra. Carmen Ruiz</p>
+            <span class="role-badge role-badge--doctor">Médico</span>
+          </div>
+        </div>
+        <a href="../auth/login.html" class="btn-ghost sidebar-logout">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <div class="topbar-content">
+          <h1 class="topbar-title">Panel</h1>
+          <p class="topbar-date" id="current-date"></p>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page">
+          <div class="page-header">
+            <h2 class="page-title">Hola, Carmen Ruiz</h2>
+            <p class="page-subtitle">Medicina General · Lun–Vie 07:00–14:00</p>
+          </div>
+
+          <section class="metrics-grid">
+            <div class="stat-card blue">
+              <span class="stat-label">Hoy</span>
+              <span class="stat-value">2</span>
+              <span class="stat-sub">Citas programadas</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">En curso</span>
+              <span class="stat-value">1</span>
+              <span class="stat-sub">Atendiendo</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Próximas</span>
+              <span class="stat-value">0</span>
+              <span class="stat-sub">Días siguientes</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Pacientes</span>
+              <span class="stat-value">2</span>
+              <span class="stat-sub">Total asignados</span>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header card-header--split">
+              <span>Agenda de hoy</span>
+              <span class="card-header-meta" id="current-date-inline"></span>
+            </div>
+            <div class="list-item">
+              <span class="item-date">08:30</span>
+              <div class="list-item-body">
+                <p class="list-item-title">Ana María García</p>
+                <p class="list-item-meta">Control de presión arterial</p>
+              </div>
+              <span class="badge badge-green">Confirmada</span>
+            </div>
+            <div class="list-item">
+              <span class="item-date">09:00</span>
+              <div class="list-item-body">
+                <p class="list-item-title">Carlos Huanca</p>
+                <p class="list-item-meta">Fiebre persistente</p>
+              </div>
+              <span class="badge badge-blue">En curso</span>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../../assets/js/main.js"></script>
+</body>
+</html>

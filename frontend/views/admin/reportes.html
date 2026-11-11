@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes - Centro Salud</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body class="admin-reports">
+  <div class="app-shell">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Menú principal">
+      <div class="sidebar-header">
+        <div class="brand-logo" aria-hidden="true">CS</div>
+        <div class="brand-text">
+          <p class="brand-name">Centro Salud</p>
+          <p class="brand-subtitle">Sistema Médico</p>
+        </div>
+        <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Cerrar menú">×</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15V9h4v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Panel general
+        </a>
+        <a href="citas.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Citas
+        </a>
+        <a href="pacientes.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 14c0-2.5 1.8-4 4.5-4s4.5 1.5 4.5 4M11 3a2.2 2.2 0 010 4.3M12 10c1.6.4 2.5 1.7 2.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Pacientes
+        </a>
+        <a href="medicos.html" class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Médicos
+        </a>
+        <a href="reportes.html" class="nav-item active" aria-current="page">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14h12M4 12V8m4 4V3m4 9V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Reportes
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" aria-hidden="true">A</div>
+          <div class="user-info">
+            <p class="user-name">Administrador</p>
+            <span class="role-badge role-badge--admin">Administrador</span>
+          </div>
+        </div>
+        <a href="../auth/login.html" class="btn-ghost sidebar-logout">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <div class="topbar-content">
+          <h1 class="topbar-title">Reportes</h1>
+          <p class="topbar-date" id="current-date"></p>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <h2 class="reports-heading">Reportes</h2>
+
+        <div class="reports-charts">
+          <section class="card report-card" aria-labelledby="status-report-title">
+            <h3 class="report-card-title" id="status-report-title">Citas por estado</h3>
+            <ul class="report-bars">
+              <li class="report-bar-row">
+                <span class="report-bar-label">Programada</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue" style="--bar-value:50%"></span></span>
+                <span class="report-bar-value">4</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Confirmada</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-green" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">En curso</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-amber" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Completada</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-gray" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Cancelada</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-red" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Reprogramada</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-purple zero" style="--bar-value:0%"></span></span>
+                <span class="report-bar-value">0</span>
+              </li>
+            </ul>
+          </section>
+
+          <section class="card report-card" aria-labelledby="specialty-report-title">
+            <h3 class="report-card-title" id="specialty-report-title">Citas por especialidad</h3>
+            <ul class="report-bars">
+              <li class="report-bar-row">
+                <span class="report-bar-label">Medicina General</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue" style="--bar-value:38%"></span></span>
+                <span class="report-bar-value">3</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Cardiología</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue" style="--bar-value:25%"></span></span>
+                <span class="report-bar-value">2</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Pediatría</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Traumatología</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Ginecología</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue" style="--bar-value:13%"></span></span>
+                <span class="report-bar-value">1</span>
+              </li>
+              <li class="report-bar-row">
+                <span class="report-bar-label">Neurología</span>
+                <span class="report-bar-track"><span class="report-bar-fill bar-blue zero" style="--bar-value:0%"></span></span>
+                <span class="report-bar-value">0</span>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <section class="card report-summary" aria-labelledby="report-summary-title">
+          <h3 class="report-card-title" id="report-summary-title">Resumen general</h3>
+          <div class="report-summary-grid">
+            <article class="report-metric">
+              <h4>Total citas</h4>
+              <p>8</p>
+            </article>
+            <article class="report-metric">
+              <h4>Pacientes activos</h4>
+              <p>3</p>
+            </article>
+            <article class="report-metric">
+              <h4>Médicos activos</h4>
+              <p>5</p>
+            </article>
+            <article class="report-metric">
+              <h4>Tasa completación</h4>
+              <p>13%</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="../../assets/js/main.js"></script>
+</body>
+</html>
