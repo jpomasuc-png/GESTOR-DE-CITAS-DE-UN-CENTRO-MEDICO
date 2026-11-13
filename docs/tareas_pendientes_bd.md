@@ -52,7 +52,7 @@
   - [x] Funciones.
   - [x] Procedimientos almacenados.
   - [x] Vistas.
-  - [x] Triggers.
+  - [] Triggers.
   - [x] Bloque final de verificación con conteo de objetos.
 - [x] Entregar la instalación en un solo archivo SQL; los archivos modulares existentes no forman parte del flujo requerido de instalación.
 - [x] Verificar que el script se ejecute **desde cero** sin errores y que pueda volver a ejecutarse sin fallar.
