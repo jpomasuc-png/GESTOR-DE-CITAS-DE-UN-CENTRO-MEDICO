@@ -10,7 +10,7 @@ SET NAMES utf8mb4;
 --   mysql --force -u root < database/tests/pruebas_procedimientos_funciones.sql
 --
 -- Requiere haber ejecutado 01_esquema.sql, 02_funciones.sql,
--- 03_procedimientos.sql y 04_vistas.sql sobre una base limpia.
+-- Requiere haber instalado database/sistema_citas_completo.sql.
 -- ====================================================================
 
 -- Fechas dinamicas: el proximo lunes con al menos 8 dias de anticipacion.
@@ -172,9 +172,9 @@ CALL sp_obtener_horarios_disponibles_medico(1, @lunes);
 
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_solicitar_recuperacion_password
--- (limitacion conocida: el esquema no almacena tokens)
+-- PRUEBAS PARA: sp_obtener_historial_cita
 -- ---------------------------------------------------------
-CALL sp_solicitar_recuperacion_password('ana@gmail.com', REPEAT('a', 64));
+CALL sp_obtener_historial_cita(@cita_maria);
 
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_obtener_metricas_dashboard_medico
@@ -233,7 +233,9 @@ CALL sp_registrar_medico(
   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
   '555000111',
   '88888888',
-  1
+  1,
+  'Consultorio 303',
+  30
 );
 SET @nuevo_usuario_medico = (
     SELECT id_usuario FROM usuarios WHERE email = 'nuevo.medico@test.com'
@@ -254,7 +256,9 @@ CALL sp_cambiar_estado_usuario(@nuevo_usuario_medico, 5);
 -- ---------------------------------------------------------
 -- PRUEBAS PARA: sp_admin_cambiar_estado_cita
 -- ---------------------------------------------------------
+-- ERROR esperado: no se permite volver de en_curso a confirmada.
 CALL sp_admin_cambiar_estado_cita(@cita_maria, 'confirmada', 1);
+CALL sp_admin_cambiar_estado_cita(@cita_maria, 'completada', 1);
 
 -- ERROR: el usuario 4 no es administrador
 CALL sp_admin_cambiar_estado_cita(@cita_maria, 'cancelada', 4);

@@ -7,7 +7,8 @@ administradores), construido sobre PHP, MySQL/MariaDB y JavaScript.
 
 ```text
 sistema-gestion-citas/
-├── database/                          # Base de datos (ejecutar en orden)
+├── database/                          # Base de datos
+│   ├── sistema_citas_completo.sql     # Instalador único principal
 │   ├── 01_esquema.sql                 # Tablas + datos de prueba
 │   ├── 02_funciones.sql               # Funciones definidas por el usuario
 │   ├── 03_procedimientos.sql          # Procedimientos almacenados
@@ -37,27 +38,30 @@ sistema-gestion-citas/
 
 ## Instalación de la base de datos
 
-Ejecutar los scripts **en orden** sobre una instalación limpia:
+El archivo principal es `database/sistema_citas_completo.sql`. En XAMPP, inicia
+MySQL/MariaDB y ejecuta desde **CMD** en la carpeta raíz del proyecto:
 
-```bash
-mysql -u root --default-character-set=utf8mb4 < database/01_esquema.sql
-mysql -u root --default-character-set=utf8mb4 < database/02_funciones.sql
-mysql -u root --default-character-set=utf8mb4 < database/03_procedimientos.sql
-mysql -u root --default-character-set=utf8mb4 < database/04_vistas.sql
+```cmd
+C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 < database\sistema_citas_completo.sql
 ```
 
-Notas:
+También se puede importar ese mismo archivo desde phpMyAdmin. No es necesario
+ejecutar los módulos `01`–`05` para instalar el proyecto.
 
-- `01_esquema.sql` elimina y recrea la base `sistema_citas` con charset
-  `utf8mb4`, por lo que una nueva ejecución reinicia los datos.
-- `02`, `03` y `04` usan `DROP ... IF EXISTS`, así que pueden volver a
-  ejecutarse sin errores.
-- Las funciones deben crearse antes que los procedimientos y las vistas, porque
-  ambos dependen de ellas.
+> **ADVERTENCIA: este instalador es destructivo.** Ejecuta `DROP DATABASE IF
+> EXISTS sistema_citas` y elimina todos los datos actuales de esa base antes de
+> crearla de nuevo. Solo debe usarse en una instalación limpia o para reiniciar
+> deliberadamente el entorno de demostración; no ejecutarlo en producción.
+
+El script fija charset, zona horaria y modo SQL de la sesión, crea las tablas,
+datos demo, funciones, procedimientos, vistas y triggers, y finaliza mostrando
+conteos de objetos y datos. Puede ejecutarse otra vez sin errores, pero cada
+ejecución vuelve a borrar y reconstruir `sistema_citas`.
 
 ## Pruebas
 
-Los siguientes scripts crean y modifican datos, y algunas pruebas provocan
+Primero instala la base con `database/sistema_citas_completo.sql`. Los
+siguientes scripts crean y modifican datos, y algunas pruebas provocan
 errores de forma intencional; usar `--force` para que continúen:
 
 ```bash

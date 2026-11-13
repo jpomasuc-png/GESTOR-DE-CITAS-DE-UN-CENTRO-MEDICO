@@ -44,20 +44,20 @@
 
 ### 3.1 Script único de creación
 
-- [ ] Crear `database/sistema_citas_completo.sql` que incluya, en orden:
-  - [ ] `DROP DATABASE IF EXISTS` / `CREATE DATABASE` con `utf8mb4` y `utf8mb4_unicode_ci`.
-  - [ ] `SET NAMES utf8mb4`, `SET time_zone`, `SET sql_mode` y `FOREIGN_KEY_CHECKS = 0/1`.
-  - [ ] Creación de las 8 tablas con PK, FK, `UNIQUE`, `CHECK` e índices.
-  - [ ] Datos iniciales (especialidades, usuarios demo, pacientes, médicos, horarios, citas, historial y configuración de notificaciones).
-  - [ ] Funciones.
-  - [ ] Procedimientos almacenados.
-  - [ ] Vistas.
-  - [ ] Triggers.
-  - [ ] Bloque final de verificación con conteo de objetos.
-- [ ] Entregar la instalación en un solo archivo SQL; los archivos modulares existentes no forman parte del flujo requerido de instalación.
-- [ ] Verificar que el script se ejecute **desde cero** sin errores y que pueda volver a ejecutarse sin fallar.
-- [ ] Separar claramente “instalación limpia” de “reinicio destructivo”: advertir en el encabezado que `DROP DATABASE` borra todo.
-- [ ] Actualizar el README con la instalación completa desde el único archivo SQL.
+- [x] Crear `database/sistema_citas_completo.sql` que incluya, en orden:
+  - [x] `DROP DATABASE IF EXISTS` / `CREATE DATABASE` con `utf8mb4` y `utf8mb4_unicode_ci`.
+  - [x] `SET NAMES utf8mb4`, `SET time_zone`, `SET sql_mode` y `FOREIGN_KEY_CHECKS = 0/1`.
+  - [x] Creación de las 8 tablas con PK, FK, `UNIQUE`, `CHECK` e índices.
+  - [x] Datos iniciales (especialidades, usuarios demo, pacientes, médicos, horarios, citas, historial y configuración de notificaciones).
+  - [x] Funciones.
+  - [x] Procedimientos almacenados.
+  - [x] Vistas.
+  - [x] Triggers.
+  - [x] Bloque final de verificación con conteo de objetos.
+- [x] Entregar la instalación en un solo archivo SQL; los archivos modulares existentes no forman parte del flujo requerido de instalación.
+- [x] Verificar que el script se ejecute **desde cero** sin errores y que pueda volver a ejecutarse sin fallar.
+- [x] Separar claramente “instalación limpia” de “reinicio destructivo”: advertir en el encabezado que `DROP DATABASE` borra todo.
+- [x] Actualizar el README con la instalación completa desde el único archivo SQL.
 
 ### 3.2 Triggers (actualmente no existe ninguno)
 

@@ -11,7 +11,7 @@ SET NAMES utf8mb4;
 --   mysql --force -u root < database/05_transactions.sql
 --
 -- Requiere haber ejecutado 01_esquema.sql, 02_funciones.sql,
--- 03_procedimientos.sql y 04_vistas.sql sobre una base limpia.
+-- Requiere haber instalado database/sistema_citas_completo.sql.
 -- ====================================================================
 
 -- ---------------------------------------------------------
@@ -89,7 +89,9 @@ CALL sp_registrar_medico(
     '$2y$10$hash',
     '900000003',
     '90000003',
-    99
+    99,
+    'Consultorio temporal',
+    30
 );
 
 SET @despues = (SELECT COUNT(*) FROM usuarios);
