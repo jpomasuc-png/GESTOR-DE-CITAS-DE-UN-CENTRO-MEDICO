@@ -3,7 +3,7 @@
 **Proyecto:** Gestor de Citas de un Centro Médico (`sistema_citas`)
 **Fecha de revisión:** 13/11/2026
 **Motor verificado:** MariaDB 10.4.32 (XAMPP)
-**Alcance:** script SQL completo con estructura, restricciones, datos, funciones, procedimientos almacenados, vistas, triggers y objetos de automatización. Sin videos.
+**Alcance:** un único script SQL con estructura, restricciones, datos, funciones, procedimientos almacenados, vistas y triggers. Sin eventos programados ni almacenamiento de notificaciones enviadas.
 
 ---
 
@@ -22,8 +22,8 @@
 
 - **0 triggers** en toda la base.
 - **0 eventos** programados.
-- **No existe un script único consolidado** de creación; la instalación depende de ejecutar 4 archivos en orden.
-- **No existe tabla ni flujo real de recuperación de contraseña**; el procedimiento actual siempre lanza error.
+- **No existe el script único de entrega**; actualmente la instalación depende de ejecutar varios archivos modulares.
+- **No existe un flujo real de recuperación de contraseña**; el procedimiento actual siempre lanza error. Se decidió identificar la cuenta por correo y actualizar su contraseña en `usuarios`, pendiente implementar el flujo con verificación de identidad.
 - **No hay tabla de notificaciones enviadas** ni historial de recordatorios.
 - **Los datos de prueba están desactualizados** (fechas de octubre 2026 ya pasadas) y la base actual contiene residuos de pruebas (5 citas en lugar de las 3 del esquema).
 - **No hay diccionario de datos, diagrama ER ni inventario de objetos** como documentación de entrega.
@@ -48,21 +48,20 @@
   - [ ] `DROP DATABASE IF EXISTS` / `CREATE DATABASE` con `utf8mb4` y `utf8mb4_unicode_ci`.
   - [ ] `SET NAMES utf8mb4`, `SET time_zone`, `SET sql_mode` y `FOREIGN_KEY_CHECKS = 0/1`.
   - [ ] Creación de las 8 tablas con PK, FK, `UNIQUE`, `CHECK` e índices.
-  - [ ] Datos iniciales (especialidades, usuarios demo, pacientes, médicos, horarios, citas, historial y notificaciones).
+  - [ ] Datos iniciales (especialidades, usuarios demo, pacientes, médicos, horarios, citas, historial y configuración de notificaciones).
   - [ ] Funciones.
   - [ ] Procedimientos almacenados.
   - [ ] Vistas.
   - [ ] Triggers.
-  - [ ] Eventos (si se aprueban como parte del alcance).
   - [ ] Bloque final de verificación con conteo de objetos.
-- [ ] Mantener los archivos modulares `01`–`05` y agregar `06_triggers.sql` (o el número que corresponda), pero el script consolidado debe ser la entrega principal.
+- [ ] Entregar la instalación en un solo archivo SQL; los archivos modulares existentes no forman parte del flujo requerido de instalación.
 - [ ] Verificar que el script se ejecute **desde cero** sin errores y que pueda volver a ejecutarse sin fallar.
 - [ ] Separar claramente “instalación limpia” de “reinicio destructivo”: advertir en el encabezado que `DROP DATABASE` borra todo.
-- [ ] Actualizar el README con el nuevo orden de ejecución y el comando de instalación completa.
+- [ ] Actualizar el README con la instalación completa desde el único archivo SQL.
 
 ### 3.2 Triggers (actualmente no existe ninguno)
 
-Crear `database/06_triggers.sql` con, como mínimo:
+Incluir los triggers en el script SQL único, con, como mínimo:
 
 - [ ] `trg_usuarios_after_insert`: crear automáticamente la fila en `notificaciones_config` para usuarios nuevos (especialmente pacientes), con valores por defecto.
 - [ ] `trg_pacientes_before_insert`: validar que el `id_usuario` tenga rol `paciente`.
@@ -70,20 +69,21 @@ Crear `database/06_triggers.sql` con, como mínimo:
 - [ ] `trg_horarios_before_insert` / `trg_horarios_before_update`: validar `hora_inicio < hora_fin`; exigir `dia_semana` en horarios regulares y `fecha` en excepciones; impedir rangos inválidos.
 - [ ] `trg_citas_before_insert`: validación de defensa en profundidad (fecha futura, anticipación mínima, horario del médico, excepción, choque de médico y choque de paciente).
 - [ ] `trg_citas_before_update`: validar transiciones de estado permitidas y evitar cambios directos que salten las reglas del negocio.
-- [ ] `trg_citas_after_update`: registrar automáticamente en `citas_historial` los cambios de estado hechos por cualquier vía.
 - [ ] `trg_citas_before_delete`: impedir borrar citas con historial o registrar la eliminación en una tabla de auditoría.
 - [ ] `trg_usuarios_before_update`: impedir desactivar o cambiar el rol del último administrador activo.
-- [ ] Definir una estrategia para no duplicar historial: hoy los procedimientos insertan en `citas_historial` manualmente; si el trigger también lo hace, se duplicarán filas. Elegir una de estas opciones:
-  - [ ] Mover el registro de historial al trigger y quitar los `INSERT` de los procedimientos.
-  - [ ] Dejar el historial en los procedimientos y usar el trigger solo para cambios directos, con una bandera o tabla auxiliar.
+- [ ] Mantener el registro del historial en los procedimientos que cambian el estado; no crear `trg_citas_after_update`.
+- [ ] Asegurar que el backend invoque esos procedimientos para todo cambio de estado y no haga `UPDATE` directo sobre `citas.estado`, para que no se omitan registros.
+- [ ] Verificar en las pruebas que cada cambio autorizado genere exactamente una fila en `citas_historial` con el usuario responsable.
 
 ### 3.3 Datos iniciales completos y coherentes
 
 - [ ] Reemplazar las fechas fijas de octubre 2026 por fechas relativas, por ejemplo `DATE_ADD(CURDATE(), INTERVAL 7 DAY)`, para que la demo siempre tenga citas próximas.
-- [ ] Incluir ejemplos de todos los estados: `programada`, `confirmada`, `en_curso`, `completada`, `cancelada`, `reprogramada`.
+- [ ] Incluir ejemplos de todos los estados: `programada`, `confirmada`, `en_curso`, `completada`, `cancelada`, `reprogramada` y `no_asistio`.
 - [ ] Insertar historial coherente para las citas que ya nacen completadas, canceladas o reprogramadas.
 - [ ] Crear `notificaciones_config` para **todos** los pacientes (hoy falta María Fernández, usuario 6).
 - [ ] Agregar al menos una excepción de horario (`tipo = 'excepcion'`) de ejemplo.
+- [ ] Agregar al esquema del médico la duración de consulta definida por el administrador al registrar al médico y usarla para generar slots disponibles.
+- [ ] Asociar un consultorio a cada médico y permitir registrar ese dato al crear el médico.
 - [ ] Agregar más especialidades y médicos si se necesita cubrir el catálogo de la interfaz (hoy solo 4 especialidades y 2 médicos).
 - [ ] Incluir casos de prueba útiles: un usuario inactivo, una cita cancelada, una cita reprogramada y una cita en curso.
 - [ ] Documentar las credenciales demo. El hash actual corresponde a la contraseña `password`; indicarlo explícitamente o cambiarlo por una contraseña segura de demo.
@@ -91,14 +91,9 @@ Crear `database/06_triggers.sql` con, como mínimo:
 
 ### 3.4 Recuperación de contraseña
 
-- [ ] Decidir si el módulo entra en el alcance de la entrega.
-- [ ] Si entra:
-  - [ ] Crear tabla `password_reset_tokens` (`id_usuario`, `token_hash`, `expira_en`, `usado`, `creado_en`).
-  - [ ] Implementar `sp_solicitar_recuperacion_password` para insertar el token con vencimiento (por ejemplo, 1 hora).
-  - [ ] Implementar `sp_validar_token_recuperacion` y `sp_consumir_token_recuperacion`.
-  - [ ] Implementar `sp_restablecer_password_con_token` con validación de expiración y uso único.
-  - [ ] Agregar trigger o evento para limpiar tokens vencidos.
-- [ ] Si no entra: eliminar el procedimiento actual o documentarlo como “no implementado” para que no parezca un error del script.
+- [ ] Implementar la recuperación identificando la cuenta por correo y actualizando `usuarios.password_hash` (sin guardar nunca la contraseña en texto plano).
+- [ ] Verificar la identidad mediante un código o enlace de un solo uso gestionado por el backend antes de permitir el cambio; conocer el correo por sí solo no autoriza el restablecimiento.
+- [ ] Reemplazar el procedimiento actual que siempre falla por una operación que reciba el correo y el hash ya generado/verificado por el backend, o retirarlo si la actualización queda exclusivamente en el backend.
 
 ### 3.5 Verificación de instalación
 
@@ -119,7 +114,7 @@ Crear `database/06_triggers.sql` con, como mínimo:
 
 - [ ] Corregir `sp_registrar_cita`: además del choque del médico, validar que el **paciente** no tenga otra cita activa en la misma fecha y hora.
 - [ ] Corregir `sp_reprogramar_cita`: aplicar la misma validación de choque del paciente.
-- [ ] Revisar `sp_obtener_horarios_disponibles_medico`: hoy devuelve la jornada y las horas ocupadas, pero no genera la lista de slots libres. Implementar generación de intervalos (requiere definir duración de consulta, por ejemplo 30 minutos).
+- [ ] Revisar `sp_obtener_horarios_disponibles_medico`: hoy devuelve la jornada y las horas ocupadas, pero no genera la lista de slots libres. Implementar intervalos usando la duración configurada por el administrador para cada médico.
 - [ ] Revisar `sp_obtener_metricas_dashboard_admin`: `citas_hoy` cuenta también canceladas y completadas. Definir si debe contar solo citas activas.
 - [ ] Endurecer `sp_admin_cambiar_estado_cita`: validar transiciones permitidas o documentar que el administrador puede forzar cualquier estado.
 - [ ] Agregar procedimientos de lectura que la interfaz necesita y hoy no existen:
@@ -133,7 +128,6 @@ Crear `database/06_triggers.sql` con, como mínimo:
   - [ ] `sp_actualizar_perfil_medico` (teléfono, especialidad, datos profesionales).
   - [ ] `sp_actualizar_datos_usuario` (nombre, email, teléfono).
   - [ ] `sp_eliminar_excepcion_horario` o `sp_desbloquear_fecha_medico`.
-  - [ ] `sp_registrar_notificacion` / `sp_marcar_notificacion_enviada` si se agrega la tabla correspondiente.
 - [ ] Agregar motivo de cancelación y observaciones al historial (`citas_historial.motivo` o `observacion`) para auditoría real.
 
 ### 4.2 Vistas
@@ -158,17 +152,13 @@ Crear `database/06_triggers.sql` con, como mínimo:
 
 ### 4.4 Notificaciones
 
-- [ ] Decidir si se almacena el historial de notificaciones. Si sí, crear `notificaciones` con `id_usuario`, `id_cita`, `canal`, `estado`, `enviado_en`, `error`.
-- [ ] Crear vista de recordatorios pendientes que excluya los ya enviados.
-- [ ] Documentar que el envío real de email/WhatsApp queda fuera de la base de datos y se hará desde el backend o un cron.
+- [ ] Mantener `notificaciones_config` para las preferencias, pero no crear una tabla de notificaciones enviadas ni guardar historial de envíos.
+- [ ] Documentar que el envío real de email/WhatsApp y la selección de recordatorios pendientes se gestionan desde el backend; no se usan eventos programados.
 
-### 4.5 Eventos y automatización
+### 4.5 Automatización
 
-- [ ] Evaluar agregar el estado `no_asistio` para citas vencidas no atendidas.
-- [ ] Crear evento que marque citas vencidas como `no_asistio` (si se aprueba el estado).
-- [ ] Crear evento de limpieza de tokens vencidos.
-- [ ] Documentar que el Event Scheduler debe estar activo (`event_scheduler = ON`) y cómo hacerlo en XAMPP.
-- [ ] Si no se usan eventos, dejar claro que los recordatorios se ejecutan desde el backend.
+- [ ] Incluir el estado `no_asistio` y definir las transiciones/reglas que lo permiten.
+- [ ] No crear eventos programados; documentar que la automatización de recordatorios y el envío se ejecutan desde el backend.
 
 ---
 
@@ -189,8 +179,8 @@ Crear `database/06_triggers.sql` con, como mínimo:
 
 - [ ] Crear diccionario de datos: tabla, columna, tipo, nulo, clave, descripción.
 - [ ] Crear diagrama ER (imagen o Mermaid) en `docs/`.
-- [ ] Crear inventario de objetos: tablas, funciones, procedimientos, vistas, triggers y eventos con una línea de propósito.
-- [ ] Documentar el orden de instalación y las dependencias entre scripts.
+- [ ] Crear inventario de objetos: tablas, funciones, procedimientos, vistas y triggers con una línea de propósito.
+- [ ] Documentar la instalación desde el único archivo SQL entregable.
 - [ ] Documentar credenciales demo y advertir que son solo para desarrollo.
 - [ ] Documentar el modelo de negocio: estados de cita, regla de 24 horas, horarios regulares/excepciones, auditoría.
 - [ ] Incluir en el README la sección “Script completo” y la sección “Triggers”.
@@ -199,23 +189,23 @@ Crear `database/06_triggers.sql` con, como mínimo:
 ### 5.3 Seguridad y operación
 
 - [ ] No usar `root` sin contraseña como usuario de aplicación; crear un usuario MySQL con permisos mínimos (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `EXECUTE`).
-- [ ] Crear `database/07_usuarios_permisos.sql` (opcional, según el alcance de la entrega).
-- [ ] Documentar que el script `01_esquema.sql` hace `DROP DATABASE` y que no debe ejecutarse en producción.
+- [ ] Evaluar incluir la creación del usuario MySQL de permisos mínimos dentro del único script (opcional y según el entorno de instalación).
+- [ ] Documentar que el script único hace `DROP DATABASE` y que no debe ejecutarse en producción.
 - [ ] Agregar script de respaldo/restauración (`mysqldump`) como anexo opcional.
 - [ ] Revisar que los `DEFINER` de funciones, procedimientos, vistas y triggers no dependan de un usuario local específico.
 
 ---
 
-## 6. Decisiones que deben tomarse antes de implementar
+## 6. Decisiones de alcance
 
-- [ ] ¿La entrega es un **solo archivo SQL** o se mantienen los archivos modulares?
-- [ ] ¿La recuperación de contraseña entra en el alcance de la base de datos?
-- [ ] ¿El historial de cambios se centraliza en triggers o se mantiene en los procedimientos?
-- [ ] ¿Se agrega el estado `no_asistio`?
-- [ ] ¿Se agrega duración de consulta para generar slots disponibles?
-- [ ] ¿Se almacenan notificaciones enviadas?
-- [ ] ¿Se incluyen eventos programados o la automatización queda en el backend?
-- [ ] ¿Se amplía el esquema con datos profesionales del médico (colegiatura, consultorio, biografía)?
+- [x] La entrega principal será **un solo archivo SQL**; no se requiere instalar los módulos por separado.
+- [x] La recuperación de contraseña entra en el alcance: se localizará la cuenta por correo y se actualizará la contraseña del usuario. El backend debe verificar la identidad antes de autorizar el cambio y entregar a la base únicamente un hash seguro, nunca texto plano.
+- [x] El historial de cambios se mantendrá en los procedimientos almacenados; no se creará `trg_citas_after_update`. Todo cambio de estado debe pasar por esos procedimientos para registrar al usuario responsable y evitar duplicados.
+- [x] Se agrega el estado `no_asistio` para citas vencidas no atendidas.
+- [x] La duración de consulta se define al registrar cada médico y se usa para calcular sus slots disponibles.
+- [x] No se almacenan notificaciones enviadas; se mantienen solo las preferencias en `notificaciones_config` y el envío se realiza desde el backend.
+- [x] No se incluyen eventos programados; la automatización queda en el backend y en los triggers requeridos.
+- [x] Cada médico tendrá un consultorio asociado, registrado al crear el médico.
 
 ---
 
@@ -224,7 +214,7 @@ Crear `database/06_triggers.sql` con, como mínimo:
 Se considera completo cuando:
 
 - [ ] Un único comando o archivo crea la base desde cero sin errores.
-- [ ] El script incluye estructura, restricciones, datos, funciones, procedimientos, vistas y triggers.
+- [ ] El único script incluye estructura, restricciones, datos, funciones, procedimientos, vistas y triggers, sin eventos programados.
 - [ ] Existen triggers funcionales y probados para las reglas críticas del negocio.
 - [ ] Los datos iniciales permiten demostrar todos los módulos con fechas vigentes.
 - [ ] No quedan procedimientos que siempre fallen ni funcionalidades documentadas como “pendientes” dentro del SQL.
@@ -236,11 +226,10 @@ Se considera completo cuando:
 
 ## 8. Orden sugerido de trabajo
 
-1. Definir alcance y decisiones de la sección 6.
-2. Corregir datos iniciales y dejar la base limpia.
-3. Implementar triggers y resolver la estrategia de historial.
-4. Corregir y completar procedimientos y vistas.
-5. Crear el script consolidado.
-6. Crear y ejecutar las pruebas de triggers, instalación y concurrencia.
-7. Generar diccionario de datos, diagrama ER e inventario.
-8. Actualizar README y preparar evidencia de entrega.
+1. Corregir datos iniciales y dejar la base limpia.
+2. Implementar los triggers requeridos, sin trigger de historial, y conservar ese registro en los procedimientos.
+3. Corregir y completar procedimientos y vistas, asegurando que todo cambio de estado use los procedimientos correspondientes.
+4. Crear el script consolidado.
+5. Crear y ejecutar las pruebas de triggers, historial, instalación y concurrencia.
+6. Generar diccionario de datos, diagrama ER e inventario.
+7. Actualizar README y preparar evidencia de entrega.
